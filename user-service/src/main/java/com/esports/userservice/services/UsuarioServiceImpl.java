@@ -4,7 +4,6 @@ import com.esports.userservice.exceptions.UsuarioException;
 import com.esports.userservice.models.Usuario;
 import com.esports.userservice.models.dtos.UsuarioDTO;
 import com.esports.userservice.repositories.UsuarioRepository;
-import jakarta.persistence.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,7 @@ public class UsuarioServiceImpl implements UsuarioService{
     @Transactional(readOnly = true)
     public List<Usuario> findAll(){
         log.info("Listando a todos los usuarios");
+        return usuarioRepository.findAll();
     }
 
     // busca a los usuarios por su rol
@@ -40,6 +40,7 @@ public class UsuarioServiceImpl implements UsuarioService{
     @Transactional(readOnly = true)
     public  List<Usuario> findByEstado(Usuario.Estado estado){
         log.info("Buscando a los usuarios con estado: {}", estado);
+        return usuarioRepository.findByEstado(estado);
     }
 
     // busca a los usuarios por su id
@@ -76,6 +77,7 @@ public class UsuarioServiceImpl implements UsuarioService{
 
         Usuario guardado = usuarioRepository.save(usuario);
         log.info("Usuario creado con la id: {}", guardado.getUsuarioId());
+        return guardado;
 
     }
 
