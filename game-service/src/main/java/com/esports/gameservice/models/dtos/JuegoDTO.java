@@ -21,5 +21,5 @@ public class JuegoDTO {
 
     @NotNull(message = "La cantidad de juagdores es obligatoria")
     @Min(value = 1, message = "Debe de haber al menos 1 jugador por equipo")
-    private Integer jugadorPorEquipo;
+    private Integer jugadoresPorEquipo;
 }
