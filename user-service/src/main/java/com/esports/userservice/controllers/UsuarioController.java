@@ -7,14 +7,11 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-//recibe peticiones https y devuelve cosas JSON
 @RestController
 @RequestMapping("/api/v1/usuarios")
-@Validated
 public class UsuarioController {
 
     @Autowired
@@ -23,25 +20,25 @@ public class UsuarioController {
     //Get /api/v1/usuarios
     @GetMapping
     public ResponseEntity<List<Usuario>> findAll(){
-        return ResponseEntity.status(HttpStatus.OK).body(this.usuarioService.findAll());
+        return ResponseEntity.ok(usuarioService.findAll());
     }
 
     //Get /api/v1/usuarios/1
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> findById(@PathVariable Long id){
-        return ResponseEntity.status(HttpStatus.OK).body(this.usuarioService.findById(id));
+        return ResponseEntity.ok(usuarioService.findById(id));
     }
 
     //Get /api/v1/usuarios/rol/jugador
     @GetMapping("/rol/{rol}")
     public ResponseEntity<List<Usuario>> findByRol(@PathVariable Usuario.Rol rol) {
-        return ResponseEntity.status(HttpStatus.OK).body(this.usuarioService.findByRol(rol));
+        return ResponseEntity.ok(usuarioService.findByRol(rol));
     }
 
     //Get /api/v1/usuarios/estado/activo
     @GetMapping("/estado/{estado}")
     public ResponseEntity<List<Usuario>> findByEstado(@PathVariable Usuario.Estado estado){
-        return ResponseEntity.status(HttpStatus.OK).body(this.usuarioService.findByEstado(estado));
+        return ResponseEntity.ok(usuarioService.findByEstado(estado));
     }
 
     //Post /api/v1/usuarios
@@ -59,7 +56,7 @@ public class UsuarioController {
     //Delete
     @DeleteMapping("/{id}")
     public ResponseEntity<Usuario> desactivar(@PathVariable Long id){
-        return ResponseEntity.status(HttpStatus.OK).body(this.usuarioService.desactivar(id));
+        return ResponseEntity.ok(usuarioService.desactivar(id));
     }
 
 

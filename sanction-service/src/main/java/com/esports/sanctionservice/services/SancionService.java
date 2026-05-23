@@ -4,7 +4,6 @@ import com.esports.sanctionservice.models.Sancion;
 import com.esports.sanctionservice.models.dtos.SancionDTO;
 import java.util.List;
 
-// interfaz que permite que puede hacer el servicio
 public interface SancionService {
 
     List<Sancion> findAll();

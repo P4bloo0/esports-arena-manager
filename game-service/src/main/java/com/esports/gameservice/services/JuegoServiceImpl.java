@@ -27,7 +27,7 @@ public class JuegoServiceImpl implements JuegoService {
     //Busca el juego por id
     @Override
     public Juego findById(Long id){
-        return this.juegoRepository.findById(id).orElseThrow(()-> new JuegoException("El juego con id " + id + " no encontrado"));
+        return this.juegoRepository.findById(id).orElseThrow(()-> new JuegoException("El juego con id " + id + " no encontrado"))
     }
 
     @Override
@@ -46,12 +46,11 @@ public class JuegoServiceImpl implements JuegoService {
 
     // aqui se actualiza un juego por su id
     @Override
-    public Juego update(Long id, JuegoDTO dto){
-        return this.juegoRepository.findById(id).map(juego -> {
+    public Juego update(Long id, JuegoDTO dto) {
+        return this.juegoRepository.findById(id).map(juego ->{
             juego.setModalidad(dto.getModalidad());
             juego.setGenero(dto.getGenero());
             juego.setJugadoresPorEquipo(dto.getJugadoresPorEquipo());
-            return this.juegoRepository.save(juego);
         }).orElseThrow(() -> new JuegoException("Juego con id " + id + " no encontrado"));
     }
 

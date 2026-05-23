@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/juegos")
-@Validated
 public class JuegoController {
 
     @Autowired
@@ -24,19 +22,19 @@ public class JuegoController {
     //GET /api/v1/juegos
     @GetMapping
     public ResponseEntity<List<Juego>> findAll(){
-        return ResponseEntity.status(HttpStatus.OK).body(this.juegoService.findAll());
+        return ResponseEntity.ok(juegoService.findAll());
     }
 
     //GET /api/vs/juegos/activos
     @GetMapping("/activos")
     public ResponseEntity<List<Juego>> findAllActivos(){
-        return ResponseEntity.status(HttpStatus.OK).body(this.juegoService.findAllActivos());
+        return ResponseEntity.ok(juegoService.findAllActivos());
     }
 
     //GET /apo/v1/juegos/1
     @GetMapping("/{id}")
     public ResponseEntity<Juego> findById(@PathVariable Long id){
-        return ResponseEntity.status(HttpStatus.OK).body(this.juegoService.findById(id));
+        return ResponseEntity.ok(juegoService.findById(id));
     }
 
     //POST /api/v1/juegos
@@ -49,13 +47,13 @@ public class JuegoController {
     //PUT /api/v1/juegos/1
     @PutMapping
     public ResponseEntity<Juego> update(@PathVariable Long id, @Valid @RequestBody JuegoDTO dto){
-        return ResponseEntity.status(HttpStatus.OK).body(this.juegoService.update(id, dto));
+        return ResponseEntity.ok(juegoService.update(id, dto));
     }
 
     //PUT /api/v1/juegos/1
     @DeleteMapping("/{id}")
     public ResponseEntity<Juego> desactivar(@PathVariable Long id){
-        return ResponseEntity.status(HttpStatus.OK).body(this.juegoService.desactivar(id));
+        return ResponseEntity.ok(juegoService.desactivar(id));
     }
 
 }
