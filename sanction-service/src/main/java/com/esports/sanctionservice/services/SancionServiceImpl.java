@@ -11,5 +11,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
-public class SancionServiceImpl {
+@Service
+public class SancionServiceImpl implements SancionService {
+
+    private static final Logger log = LoggerFactory.getLogger(SancionServiceImpl.class);
+
+    @Autowired
+    private SancionRepository sancionRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public 
+
 }
