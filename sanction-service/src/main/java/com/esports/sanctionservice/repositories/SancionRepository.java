@@ -8,12 +8,15 @@ import java.util.List;
 @Repository
 public interface SancionRepository extends JpaRepository<Sancion, Long> {
 
+    //busca por ID sanciones
     List<Sancion> findByUsuarioId(Long usuarioId);
-    List<Sancion> findByEsquipoId(Long equipoId);
-    List<Sancion> findByEstado(String estado);
 
-    //esto buscara sanciones activas de algun usuario para bloquear su inscripcion
+    //busca sanciones por equipo
+    List<Sancion> findByEsquipoId(Long equipoId);
+
+
+    //buscará sanciones activas por usuario o equipo
     List<Sancion> findByUsuarioIdAndEstado(Long usuarioId, String estado);
-    List<Sancion> findByEquipoIdAndEstado(Long esquipoId, String estado);
+    List<Sancion> findByEquipoIdAndEstado(Long equipoId, String estado);
 
 }
