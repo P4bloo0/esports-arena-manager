@@ -6,7 +6,7 @@ import lombok.*;
 
 // lo que hace entity es decirle al spring que la clase es una tabla para la base de datos
 @Entity
-@Table
+@Table(name = "juego")
 @Getter
 @Setter
 @NoArgsConstructor

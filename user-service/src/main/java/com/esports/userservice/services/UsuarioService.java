@@ -4,6 +4,8 @@ import com.esports.userservice.models.Usuario;
 import com.esports.userservice.models.dtos.UsuarioDTO;
 import java.util.List;
 
+// esta es una interfaz que define que puede hacer este servicio
+// la logica verdadera esta en UsuarioServiceImpl
 public interface UsuarioService {
 
     List<Usuario> findAll();

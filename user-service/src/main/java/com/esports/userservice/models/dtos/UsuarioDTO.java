@@ -4,6 +4,7 @@ import com.esports.userservice.models.Usuario;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+//objeto que recibe el controller cuando alguien hace post o put
 @Getter
 @Setter
 @NoArgsConstructor
