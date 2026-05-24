@@ -13,7 +13,7 @@ public class TorneoDTO {
     private String nombre;
 
     @NotNull(message = "El juego es obligatorio")
-    private Long juegoid;
+    private Long juegoId;
 
     @NotNull(message = "La fecha inicio es obligatoria")
     private LocalDateTime fechaInicio;

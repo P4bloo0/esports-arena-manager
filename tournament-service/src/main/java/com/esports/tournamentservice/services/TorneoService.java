@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface TorneoService {
 
-    List<Torneo> finAll();
+    List<Torneo> findAll();
     Torneo findById(Long id);
     List<Torneo> findByEstado(String estado);
     List<Torneo> findByJuegoId(Long juegoId);
