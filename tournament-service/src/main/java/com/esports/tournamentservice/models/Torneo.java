@@ -49,7 +49,7 @@ public class Torneo {
     @Column(nullable = false)//estados posibles
     private String estado = "BORRADOR";
 
-    @NotBlank(message = "La modalidad es obligatoria")
+    @NotBlank(message = "La modalidad es obligatoria")//modalidad_ eliminacion_directa, grupos etc...
     @Column(nullable = false)
     private String modalidad;
 }
