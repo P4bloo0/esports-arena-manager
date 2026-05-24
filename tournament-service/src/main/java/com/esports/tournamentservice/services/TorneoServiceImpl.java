@@ -8,6 +8,7 @@ import com.esports.tournamentservice.repositories.TorneoRepository;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,27 +21,32 @@ public class TorneoServiceImpl implements TorneoService{
     @Autowired
     private JuegoClient juegoClient;
 
+    @Transactional(readOnly = true)
     @Override//esto retorna todos los torneos que hayan
     public List<Torneo> findAll(){
         return this.torneoRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     @Override//esto busca torneos por su id y tiene una excepcion cuando no existan
     public Torneo findById(Long id){
         return this.torneoRepository.findById(id)
                 .orElseThrow(()-> new TorneoException("Torneo con id '" + id + "' no encontrado"));
     }
 
+    @Transactional(readOnly = true)
     @Override//esto devuelve torneos por estado
     public List<Torneo> findByEstado(String estado){
         return this.torneoRepository.findByEstado(estado);
     }
 
+    @Transactional(readOnly = true)
     @Override//esto devolverá torneos por juego
     public List<Torneo> findByJuegoId(Long juegoId){
         return this.torneoRepository.findByJuegoId(juegoId);
     }
 
+    @Transactional
     @Override//esto va a crear un nuevo torneo y verificara si existe el juego
     public  Torneo save(TorneoDTO dto){
 
@@ -72,6 +78,7 @@ public class TorneoServiceImpl implements TorneoService{
     }
 
     //esto actualizara los datos de un torneo existente
+    @Transactional
     @Override
     public Torneo update(Long id, TorneoDTO dto){
         return this.torneoRepository.findById(id).map(torneo -> {
@@ -92,12 +99,19 @@ public class TorneoServiceImpl implements TorneoService{
     }
 
     //este metodo va a cambiar el estado de un torneo
+    @Transactional
     @Override
     public Torneo cambiarEstado(Long id, String nuevoEstado){
         return this.torneoRepository.findById(id).map(torneo -> {
             torneo.setEstado(nuevoEstado);
             return this.torneoRepository.save(torneo);
         }).orElseThrow(()->new TorneoException("Torneo con id '" + id + "' no encontrado"));
+    }
+
+    @Transactional
+    @Override// esto es para borrar un torneo por su id
+    public void deleteById(Long id){
+        this.torneoRepository.deleteById(id);
     }
 
 }

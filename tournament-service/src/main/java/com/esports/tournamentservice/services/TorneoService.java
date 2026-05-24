@@ -13,5 +13,6 @@ public interface TorneoService {
     Torneo save(TorneoDTO dto);
     Torneo update(Long id, TorneoDTO dto);
     Torneo cambiarEstado(Long id, String nuevoEstado);
+    void deleteById(Long id);
 
 }

@@ -12,6 +12,7 @@ import com.esports.teamservice.repositories.MiembroEquipoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import feign.FeignException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,22 +32,27 @@ public class EquipoServiceImpl implements EquipoService{
     @Autowired
     private JuegoClient juegoClient;
 
+    @Transactional(readOnly = true)
     @Override //esto devolverá todos los equipos
     public List<Equipo> findAll(){
         return this.equipoRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     @Override//busca un equipo con la id si no existe lanza una excepción
     public Equipo findById(Long id){
         return this.equipoRepository.findById(id)
                 .orElseThrow(()-> new EquipoException("Equipo con id '" + id + "' no encontrado"));
     }
 
+    @Transactional(readOnly = true)
     @Override//esto devolverá equipos por estado
     public List<Equipo> findByEstado( Boolean estado){
         return this.equipoRepository.findByEstado(estado);
     }
 
+
+    @Transactional
     @Override//esto va a crear un nuevo equipo y verificará si existe un capitán
     public Equipo save(EquipoDTO dto){
 
@@ -73,6 +79,7 @@ public class EquipoServiceImpl implements EquipoService{
         return this.equipoRepository.save(equipo);
     }
 
+    @Transactional
     @Override//esto va a actualizar los datos del equipo existente
     public Equipo update(Long id, EquipoDTO dto){
         return this.equipoRepository.findById(id).map(equipo -> {
@@ -82,7 +89,7 @@ public class EquipoServiceImpl implements EquipoService{
         }).orElseThrow(() -> new EquipoException("Equipo con id '" + id + " no encontrado"));
     }
 
-
+    @Transactional
     @Override// esto desactiva un equipo
     public Equipo desactivar(Long id){
         return this.equipoRepository.findById(id).map(equipo -> {
@@ -91,7 +98,7 @@ public class EquipoServiceImpl implements EquipoService{
         }).orElseThrow(() -> new EquipoException("Equipo con id '" + id + "' no encontrado"));
     }
 
-
+    @Transactional
     @Override//esto agregara miembros al equipo
     public MiembroEquipo agregarMiembro(MiembroEquipoDTO dto){
 
@@ -117,7 +124,7 @@ public class EquipoServiceImpl implements EquipoService{
 
         }
 
-        //esto retornara a todos los miembros del equipo
+    @Transactional(readOnly = true)//esto retornara a todos los miembros del equipo
     @Override
     public List<MiembroEquipo> findMiembrosByEquipoId(Long equipoId){
         return this.miembroEquipoRepository.findByEquipoId(equipoId);

@@ -5,6 +5,8 @@ import com.esports.gameservice.models.dtos.JuegoDTO;
 import com.esports.gameservice.repositories.JuegoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 // aqui va la logica del negocio y o proyecto
@@ -14,22 +16,27 @@ public class JuegoServiceImpl implements JuegoService {
     @Autowired
     private JuegoRepository juegoRepository;
 
+    @Transactional(readOnly = true)
     @Override
     public List<Juego> findAll(){
         return this.juegoRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Juego> findAllActivos(){
         return this.juegoRepository.findByEstado(true);
     }
 
     //Busca el juego por id
+    @Transactional(readOnly = true)
     @Override
     public Juego findById(Long id){
-        return this.juegoRepository.findById(id).orElseThrow(()-> new JuegoException("El juego con id " + id + " no encontrado"));
+        return this.juegoRepository.findById(id)
+                .orElseThrow(()-> new JuegoException("El juego con id " + id + " no encontrado"));
     }
 
+    @Transactional
     @Override
     public Juego save(JuegoDTO dto) {
         if (this.juegoRepository.findByNombre(dto.getNombre()).isPresent()) {
@@ -45,6 +52,7 @@ public class JuegoServiceImpl implements JuegoService {
     }
 
     // aqui se actualiza un juego por su id
+    @Transactional
     @Override
     public Juego update(Long id, JuegoDTO dto){
         return this.juegoRepository.findById(id).map(juego -> {
@@ -55,6 +63,7 @@ public class JuegoServiceImpl implements JuegoService {
         }).orElseThrow(() -> new JuegoException("Juego con id " + id + " no encontrado"));
     }
 
+    @Transactional
     @Override
     public Juego desactivar(Long id){
         return this.juegoRepository.findById(id).map(juego -> {

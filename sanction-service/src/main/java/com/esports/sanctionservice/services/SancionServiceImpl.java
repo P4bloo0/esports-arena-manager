@@ -6,6 +6,8 @@ import com.esports.sanctionservice.models.dtos.SancionDTO;
 import com.esports.sanctionservice.repositories.SancionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -14,13 +16,16 @@ public class SancionServiceImpl implements SancionService {
     @Autowired
     private SancionRepository sancionRepository;
 
+
     //devuelve todas las sanciones
+    @Transactional(readOnly = true)
     @Override
     public List<Sancion> findAll(){
         return this.sancionRepository.findAll();
     }
 
     //busca alguna sancion con la id pero si no existe manda una excepcion
+    @Transactional(readOnly = true)
     @Override
     public Sancion findById(Long id){
         return this.sancionRepository.findById(id)
@@ -28,18 +33,21 @@ public class SancionServiceImpl implements SancionService {
     }
 
     //devuelve todas las sanciones de un solo usuario
+    @Transactional(readOnly = true)
     @Override
     public List<Sancion> findByUsuarioId(Long usuarioId){
         return this.sancionRepository.findByUsuarioId(usuarioId);
     }
 
     //esto devolvera todas las sanciones de un equipo
+    @Transactional(readOnly = true)
     @Override
     public List<Sancion> findByEquipoId(Long equipoId){
         return this.sancionRepository.findByEsquipoId(equipoId);
     }
 
     //esto creara una nueva sancion
+    @Transactional
     @Override
     public Sancion save(SancionDTO dto){
         // esto hara que tenga al menos un usuario o equipo
@@ -64,6 +72,7 @@ public class SancionServiceImpl implements SancionService {
     }
 
     //esto actualizara los datos de una sancion existente
+    @Transactional
     @Override
     public Sancion update(Long id, SancionDTO dto){
         return this.sancionRepository.findById(id).map(sancion -> {
@@ -79,6 +88,7 @@ public class SancionServiceImpl implements SancionService {
     }
 
     //cierra una sancion cerrada
+    @Transactional
     @Override
     public Sancion cerrar(Long id){
         return this.sancionRepository.findById(id).map(sancion -> {
@@ -89,6 +99,7 @@ public class SancionServiceImpl implements SancionService {
     }
 
     //esto verificara si un usuario o equipo tiene una sancion activa
+    @Transactional(readOnly = true)
     @Override
     public boolean tieneSancionActiva(Long usuarioId, Long equipoId){
         if(usuarioId != null && !this.sancionRepository.findByUsuarioIdAndEstado(usuarioId, "ACTIVA").isEmpty())
