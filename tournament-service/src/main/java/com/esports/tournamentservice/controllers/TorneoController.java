@@ -57,7 +57,7 @@ public class TorneoController {
         return ResponseEntity.status(HttpStatus.OK).body(this.torneoService.cambiarEstado(id, nuevo));
     }
 
-    @PutMapping("/{id}")//delete /api/v1/torneos/1
+    @DeleteMapping("/{id}")//delete /api/v1/torneos/1
     public ResponseEntity<Void> delete(@PathVariable Long id){
         this.torneoService.deleteById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

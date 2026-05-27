@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDateTime;
 
+@Entity
 @Table(name = "torneos")
 @ToString
 @Getter
