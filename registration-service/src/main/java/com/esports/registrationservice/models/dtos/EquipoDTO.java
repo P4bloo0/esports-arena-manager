@@ -2,7 +2,6 @@ package com.esports.registrationservice.models.dtos;
 
 import lombok.*;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -10,5 +9,5 @@ import lombok.*;
 public class EquipoDTO {
     private Long equipoId;
     private String nombre;
-    private String estado;
+    private Boolean estado;
 }
