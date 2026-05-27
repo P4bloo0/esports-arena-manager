@@ -43,7 +43,7 @@ public class SancionServiceImpl implements SancionService {
     @Transactional(readOnly = true)
     @Override
     public List<Sancion> findByEquipoId(Long equipoId){
-        return this.sancionRepository.findByEsquipoId(equipoId);
+        return this.sancionRepository.findByEquipoId(equipoId);
     }
 
     //esto creara una nueva sancion

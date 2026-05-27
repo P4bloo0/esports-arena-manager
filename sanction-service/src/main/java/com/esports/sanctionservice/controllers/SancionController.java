@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@RestController
+@Validated
+@RequestMapping("/api/v1/sanciones")
 public class SancionController {
 
     @Autowired

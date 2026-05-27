@@ -12,7 +12,7 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
     List<Sancion> findByUsuarioId(Long usuarioId);
 
     //busca sanciones por equipo
-    List<Sancion> findByEsquipoId(Long equipoId);
+    List<Sancion> findByEquipoId(Long equipoId);
 
 
     //buscará sanciones activas por usuario o equipo
