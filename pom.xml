@@ -42,6 +42,7 @@
 		<module>ranking-service</module>
 		<module>sanction-service</module>
 		<module>notification-service</module>
+		<module>eureka-service</module>
 	</modules>
 
 	<dependencies>
