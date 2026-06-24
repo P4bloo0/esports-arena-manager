@@ -1,4 +1,4 @@
-package com.esports.gameservice.config;
+package com.esports.resultservice.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
