@@ -142,6 +142,3 @@ springdoc:
         url: /api-docs/resultados
       - name: notificaciones
         url: /api-docs/notificaciones
-
-jwt:
-  secret: clave-secreta-super-segura-para-jwt-hospital-msvc-duoc-2026-0616

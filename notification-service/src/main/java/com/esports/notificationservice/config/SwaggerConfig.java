@@ -1,4 +1,4 @@
-package com.esports.gameservice.config;
+package com.esports.notificationservice.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -12,8 +12,8 @@ public class SwaggerConfig {
     public OpenAPI customOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("API Game Service")
+                        .title("API Notification service")
                         .version("1.0")
-                        .description("Gestion de juegos del eSports Arena Manager"));
+                        .description("Gestion de notificaciones de esport arena manager"));
     }
 }
