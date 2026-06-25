@@ -44,9 +44,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/docs/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // IMPORTANTE: Permitir login y registro sin token
-                        .requestMatchers("/api/v1/usuarios/login/**", "/api/v1/usuarios/auth/**").permitAll()
-                        .anyRequest().authenticated())
+                        .requestMatchers("/api/v1/usuarios/login/**", "/api/v1/usuarios/auth/**", "/api/v1/usuarios").permitAll()
+                        .anyRequest().authenticated()
+                )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(converter)));
         return http.build();
