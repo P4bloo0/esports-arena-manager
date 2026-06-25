@@ -3,6 +3,7 @@ package com.esports.gatewayservice.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -43,6 +44,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // REPARACIÓN: Permitir crear usuarios (POST) en el gateway
+                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
                         // Permite acceso libre a tus endpoints de autenticación y usuarios públicos (login/registro)
                         .requestMatchers("/api/v1/usuarios/auth/**", "/api/v1/usuarios/login/**", "/api/v1/usuarios/registro/**").permitAll()
                         // Swagger UI unificado y rutas de documentación abiertas
