@@ -44,6 +44,7 @@
 		<module>notification-service</module>
 		<module>eureka-service</module>
 		<module>gateway-service</module>
+		<module>auth-service</module>
 	</modules>
 
 	<dependencies>
