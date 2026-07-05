@@ -1,0 +1,297 @@
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - esports-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  eureka-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: eureka-service
+    container_name: eureka-service
+    ports:
+      - "8761:8761"
+    networks:
+      - esports-net
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: gateway-service
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+    depends_on:
+      - eureka-service
+    networks:
+      - esports-net
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: auth-service
+    container_name: auth-service
+    ports:
+      - "8011:8011"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_auth?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: user-service
+    container_name: user-service
+    ports:
+      - "8001:8001"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_user?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  game-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: game-service
+    container_name: game-service
+    ports:
+      - "8002:8002"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_game?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  team-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: team-service
+    container_name: team-service
+    ports:
+      - "8003:8003"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_team?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  tournament-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: tournament-service
+    container_name: tournament-service
+    ports:
+      - "8004:8004"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_tournament?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  registration-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: registration-service
+    container_name: registration-service
+    ports:
+      - "8005:8005"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_registration?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  match-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: match-service
+    container_name: match-service
+    ports:
+      - "8006:8006"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_match?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  result-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: result-service
+    container_name: result-service
+    ports:
+      - "8007:8007"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_result?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  ranking-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: ranking-service
+    container_name: ranking-service
+    ports:
+      - "8008:8008"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_ranking?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  sanction-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: sanction-service
+    container_name: sanction-service
+    ports:
+      - "8009:8009"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_sanction?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: notification-service
+    container_name: notification-service
+    ports:
+      - "8010:8010"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_notification?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-service:
+        condition: service_started
+    networks:
+      - esports-net
+
+networks:
+  esports-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
