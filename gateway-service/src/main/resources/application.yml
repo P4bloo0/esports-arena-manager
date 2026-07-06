@@ -46,6 +46,10 @@ spring:
               uri: lb://notification-service
               predicates:
                 - Path=/api/v1/notificaciones/**
+            - id: auth-service
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/v1/auth/**
 
             # Rutas para el OpenAPI (JSON) de cada microservicio para Swagger UI
             - id: user-api-docs
@@ -108,6 +112,12 @@ spring:
                 - Path=/api-docs/notificaciones
               filters:
                 - RewritePath=/api-docs/notificaciones, /v3/api-docs
+            - id: auth-api-docs
+              uri: lb://auth-service
+              predicates:
+                - Path=/api-docs/auth
+              filters:
+                - RewritePath=/api-docs/auth, /v3/api-docs
 
 server:
   port: 8080
@@ -142,3 +152,5 @@ springdoc:
         url: /api-docs/resultados
       - name: notificaciones
         url: /api-docs/notificaciones
+      - name: auth
+        url: /api-docs/auth
