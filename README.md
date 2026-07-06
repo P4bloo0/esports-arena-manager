@@ -10,17 +10,25 @@ Plataforma backend distribuida para gestionar torneos de videojuegos competitivo
 - Java 21
 - Spring Boot 4.0.6
 - Spring Data JPA + Hibernate
-- H2 Database
+- MySQL
 - Spring Cloud OpenFeign
+- Netflix Eureka
+- Spring Cloud Gateway
+- Spring Security + OAuth2 Resource Server (JWT)
 - Bean Validation
 - SLF4J
 - Lombok
+- JUnit 5 + Mockito
+- Docker
 - Maven
 
 ## Microservicios
 
 | Servicio | Puerto | Descripción |
 |---|---|---|
+| eureka-service | 8761 | Registro y descubrimiento de servicios |
+| gateway-service | 8080 | Punto de entrada único, enrutamiento centralizado |
+| auth-service | 8011 | Registro, login y emisión de JWT |
 | user-service | 8001 | Gestiona jugadores, organizadores y administradores |
 | game-service | 8002 | Administra los videojuegos disponibles para torneos |
 | team-service | 8003 | Gestiona equipos y sus integrantes |
@@ -32,15 +40,19 @@ Plataforma backend distribuida para gestionar torneos de videojuegos competitivo
 | sanction-service | 8009 | Administra sanciones a jugadores y equipos |
 | notification-service | 8010 | Gestiona notificaciones internas del sistema |
 
-## Como ejecutar
+## Como ejecutar (Laragon)
 
 1. Clonar el repositorio
 ```bash
 git clone https://github.com/P4bloo0/esports-arena-manager.git
 ```
-2. Abrir en IntelliJ IDEA
-3. Esperar que Maven descargue las dependencias
-4. Ejecutar cada Application.java en este orden (importante respetar el orden porque algunos servicios dependen de otros)
+2. Abrir Laragon y darle Start All (o al menos que MySQL quede corriendo en el puerto 3306, usuario root, sin contraseña)
+3. Abrir el proyecto en IntelliJ IDEA
+4. `mvn clean install` desde la raíz para bajar las dependencias
+5. Ejecutar cada Application.java en este orden:
+    - eureka-service (8761)
+    - gateway-service (8080)
+    - auth-service (8011)
     - user-service (8001)
     - game-service (8002)
     - team-service (8003)
@@ -51,9 +63,47 @@ git clone https://github.com/P4bloo0/esports-arena-manager.git
     - result-service (8007)
     - ranking-service (8008)
     - notification-service (8010)
-5. Probar con Postman en http://localhost:800X/api/v1/
+6. Verificar en http://localhost:8761 que todos los servicios estén UP
+7. Las bases de datos se crean solas la primera vez que cada servicio se conecta (createDatabaseIfNotExist=true), no hace falta crearlas a mano en Laragon
+8. Probar con Postman a través del Gateway en http://localhost:8080/api/v1/...
+
+## Autenticación
+
+Todos los endpoints de negocio requieren un JWT válido, salvo Swagger/API docs. El token se obtiene desde auth-service:
+
+```
+POST http://localhost:8080/api/v1/auth/register
+{
+    "nickname": "usuario",
+    "password": "clave123"
+}
+```
+
+```
+POST http://localhost:8080/api/v1/auth/login
+{
+    "nickname": "usuario",
+    "password": "clave123"
+}
+```
+
+Ambos devuelven un token que se debe enviar en cada petición posterior:
+
+```
+Authorization: Bearer <token>
+```
+
+## Como ejecutar con Docker
+
+```bash
+docker compose up --build
+```
+
+Levanta un MySQL propio en contenedor (puerto 3307 en el host, para no chocar con Laragon) junto con los 13 microservicios. Eureka queda en localhost:8761 y el Gateway en localhost:8080.
 
 ## Flujo principal
+
+Antes de cualquier prueba, registrarse o loguearse en auth-service y usar el token en el header Authorization de cada petición.
 
 Para probar el sistema completo sigue este orden:
 1. Crear un juego en game-service
