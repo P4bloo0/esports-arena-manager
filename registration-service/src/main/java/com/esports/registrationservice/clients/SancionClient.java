@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Map;
 
 
-@FeignClient(name = "sanction-service", url = "localhost:8009/api/v1/sanciones")
+@FeignClient(name = "sanction-service", path = "/api/v1/sanciones")
 public interface SancionClient {
 
     @GetMapping("/verificar")

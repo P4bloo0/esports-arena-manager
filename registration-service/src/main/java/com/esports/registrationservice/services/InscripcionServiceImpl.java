@@ -32,6 +32,9 @@ public class InscripcionServiceImpl implements InscripcionService {
     @Autowired
     private TorneoClient torneoClient;
 
+    @Autowired private CupoService cupos;
+    @Autowired private com.esports.registrationservice.clients.JuegoClient juegoClient;
+
     @Autowired
     private UsuarioClient usuarioClient;
 
@@ -53,7 +56,7 @@ public class InscripcionServiceImpl implements InscripcionService {
     public Inscripcion findById(Long id) {
         log.info("Buscando inscripcion con id {}", id);
         return this.inscripcionRepository.findById(id)
-                .orElseThrow(() -> new InscripcionException("Inscripcion con id '" + id + "' no encontrada"));
+                .orElseThrow(() -> new InscripcionException("Inscripcion con id '" + id + "' no encontrada",404));
     }
 
     @Transactional(readOnly = true)
@@ -82,6 +85,8 @@ public class InscripcionServiceImpl implements InscripcionService {
     public Inscripcion save(InscripcionDTO dto) {
         log.info("Intentando crear inscripcion para torneo id {}", dto.getTorneoId());
 
+        try { cupos.ensure(dto.getTorneoId()); } catch(org.springframework.dao.DataIntegrityViolationException ignored) {}
+        cupos.lock(dto.getTorneoId());
         TorneoDTO torneo;
         try {
             torneo = this.torneoClient.getTorneoById(dto.getTorneoId());
@@ -95,19 +100,27 @@ public class InscripcionServiceImpl implements InscripcionService {
             throw new InscripcionException("El torneo no esta abierto para inscripciones. Estado actual: " + torneo.getEstado());
         }
 
-        long inscritos = this.inscripcionRepository.countByTorneoIdAndEstado(dto.getTorneoId(), Inscripcion.Estado.CONFIRMADA);
+        long inscritos = ocupados(dto.getTorneoId());
+        boolean individual=torneo.getModalidad()!=null && torneo.getModalidad().toLowerCase().matches(".*(solo|individual|1\\s*(vs|v)\\s*1).*");
+        if(individual != (dto.getTipoParticipante()==Inscripcion.TipoParticipante.INDIVIDUAL)) throw new InscripcionException("El tipo de participante no coincide con la modalidad del torneo");
+        if(dto.getTipoParticipante()==Inscripcion.TipoParticipante.EQUIPO && dto.getJugadorId()!=null || dto.getTipoParticipante()==Inscripcion.TipoParticipante.INDIVIDUAL && dto.getEquipoId()!=null) throw new InscripcionException("Indica exclusivamente equipo o jugador");
         if (inscritos >= torneo.getCupoMaximo()) {
             log.warn("Torneo con id {} ha alcanzado el cupo maximo de {}", dto.getTorneoId(), torneo.getCupoMaximo());
             throw new InscripcionException("El torneo ha alcanzado el cupo maximo de " + torneo.getCupoMaximo() + " participantes");
         }
 
-        if (torneo.getFechaCierreInscripcion() != null && LocalDateTime.now().isAfter(torneo.getFechaCierreInscripcion())) {
+        if (torneo.getFechaCierreInscripcion() != null && com.esports.common.ArenaTime.now().isAfter(torneo.getFechaCierreInscripcion())) {
             log.warn("Intento de inscripcion fuera de plazo en torneo id {}", dto.getTorneoId());
             throw new InscripcionException("El plazo de inscripcion para este torneo ha cerrado");
         }
 
         if (dto.getTipoParticipante() == Inscripcion.TipoParticipante.EQUIPO) {
             validarInscripcionEquipo(dto);
+            var equipo=equipoClient.getEquipoById(dto.getEquipoId());
+            var juego=juegoClient.getJuegoById(torneo.getJuegoId());
+            if(!Boolean.TRUE.equals(juego.estado()) || !java.util.Objects.equals(equipo.getJuegoPrincipalId(),torneo.getJuegoId())) throw new InscripcionException("El equipo y el torneo deben tener el mismo juego habilitado");
+            var miembros=equipoClient.miembros(dto.getEquipoId());
+            if(miembros.stream().map(com.esports.registrationservice.clients.EquipoClient.Miembro::usuarioId).distinct().count()<juego.jugadoresPorEquipo()) throw new InscripcionException("El equipo no tiene suficientes integrantes");
         } else {
             validarInscripcionIndividual(dto);
         }
@@ -117,14 +130,17 @@ public class InscripcionServiceImpl implements InscripcionService {
         inscripcion.setEquipoId(dto.getEquipoId());
         inscripcion.setJugadorId(dto.getJugadorId());
         inscripcion.setTipoParticipante(dto.getTipoParticipante());
-        inscripcion.setEstado(Inscripcion.Estado.CONFIRMADA);
-        inscripcion.setFechaInscripcion(LocalDateTime.now());
+        inscripcion.setEstado(Inscripcion.Estado.PENDIENTE);
+        inscripcion.setFechaInscripcion(com.esports.common.ArenaTime.now());
 
         Inscripcion guardada = this.inscripcionRepository.save(inscripcion);
         log.info("Inscripcion creada exitosamente con id {}", guardada.getInscripcionId());
         return guardada;
     }
 
+    public long ocupados(Long torneoId) {
+        return inscripcionRepository.countByTorneoIdAndEstado(torneoId,Inscripcion.Estado.CONFIRMADA)+inscripcionRepository.countByTorneoIdAndEstado(torneoId,Inscripcion.Estado.PENDIENTE);
+    }
     private void validarInscripcionEquipo(InscripcionDTO dto) {
         if (dto.getEquipoId() == null) {
             throw new InscripcionException("Debe proporcionar el id del equipo para inscripcion de tipo EQUIPO");
@@ -192,12 +208,12 @@ public class InscripcionServiceImpl implements InscripcionService {
     public Inscripcion actualizarEstado(Long id, String nuevoEstado) {
         log.info("Actualizando estado de inscripcion id {} a {}", id, nuevoEstado);
         return this.inscripcionRepository.findById(id).map(inscripcion -> {
-            if (inscripcion.getEstado() == Inscripcion.Estado.CANCELADA) {
-                throw new InscripcionException("No se puede cambiar el estado de una inscripcion cancelada");
-            }
-            inscripcion.setEstado(Inscripcion.Estado.valueOf(nuevoEstado.toUpperCase()));
+            var siguiente=Inscripcion.Estado.valueOf(nuevoEstado.toUpperCase());
+            if(inscripcion.getEstado()!=Inscripcion.Estado.PENDIENTE || !java.util.Set.of(Inscripcion.Estado.CONFIRMADA,Inscripcion.Estado.RECHAZADA,Inscripcion.Estado.CANCELADA).contains(siguiente)) throw new InscripcionException("Transicion de inscripcion no permitida");
+            cupos.lock(inscripcion.getTorneoId());
+            inscripcion.setEstado(siguiente);
             return this.inscripcionRepository.save(inscripcion);
-        }).orElseThrow(() -> new InscripcionException("Inscripcion con id '" + id + "' no encontrada"));
+        }).orElseThrow(() -> new InscripcionException("Inscripcion con id '" + id + "' no encontrada",404));
     }
 
     @Transactional
@@ -208,8 +224,9 @@ public class InscripcionServiceImpl implements InscripcionService {
             if (inscripcion.getEstado() == Inscripcion.Estado.CANCELADA) {
                 throw new InscripcionException("La inscripcion ya esta cancelada");
             }
+            cupos.lock(inscripcion.getTorneoId());
             inscripcion.setEstado(Inscripcion.Estado.CANCELADA);
             return this.inscripcionRepository.save(inscripcion);
-        }).orElseThrow(() -> new InscripcionException("Inscripcion con id '" + id + "' no encontrada"));
+        }).orElseThrow(() -> new InscripcionException("Inscripcion con id '" + id + "' no encontrada",404));
     }
 }

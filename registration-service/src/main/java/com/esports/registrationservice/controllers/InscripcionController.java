@@ -22,12 +22,14 @@ public class InscripcionController {
 
     // GET /api/v1/inscripciones
     @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ORGANIZADOR','ADMINISTRADOR')")
     public ResponseEntity<List<Inscripcion>> findAll() {
         return ResponseEntity.status(HttpStatus.OK).body(this.inscripcionService.findAll());
     }
 
     // GET /api/v1/inscripciones/1
     @GetMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("@inscripcionAccess.manage(#id)")
     public ResponseEntity<Inscripcion> findById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(this.inscripcionService.findById(id));
     }
@@ -40,6 +42,7 @@ public class InscripcionController {
 
     // GET /api/v1/inscripciones/equipo/1
     @GetMapping("/equipo/{equipoId}")
+    @org.springframework.security.access.prepost.PreAuthorize("@inscripcionAccess.team(#equipoId)")
     public ResponseEntity<List<Inscripcion>> findByEquipo(@PathVariable Long equipoId) {
         return ResponseEntity.status(HttpStatus.OK).body(this.inscripcionService.findByEquipoId(equipoId));
     }
@@ -47,11 +50,13 @@ public class InscripcionController {
     // GET /api/v1/inscripciones/jugador/1
     @GetMapping("/jugador/{jugadorId}")
     public ResponseEntity<List<Inscripcion>> findByJugador(@PathVariable Long jugadorId) {
+        com.esports.common.Actor.own(jugadorId);
         return ResponseEntity.status(HttpStatus.OK).body(this.inscripcionService.findByJugadorId(jugadorId));
     }
 
     // POST /api/v1/inscripciones
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("@inscripcionAccess.submit(#dto)")
     public ResponseEntity<Inscripcion> save(@Valid @RequestBody InscripcionDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.inscripcionService.save(dto));
     }
@@ -65,6 +70,7 @@ public class InscripcionController {
 
     // DELETE /api/v1/inscripciones/1
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("@inscripcionAccess.manage(#id)")
     public ResponseEntity<Inscripcion> cancelar(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(this.inscripcionService.cancelar(id));
     }

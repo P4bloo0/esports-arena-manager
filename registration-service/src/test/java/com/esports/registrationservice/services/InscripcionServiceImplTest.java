@@ -45,6 +45,8 @@ public class InscripcionServiceImplTest {
 
     @Mock
     private SancionClient sancionClient;
+    @Mock private CupoService cupos;
+    @Mock private com.esports.registrationservice.clients.JuegoClient juegoClient;
 
     @InjectMocks
     private InscripcionServiceImpl inscripcionService;
@@ -76,6 +78,8 @@ public class InscripcionServiceImplTest {
 
         torneoAbierto = new TorneoDTO();
         torneoAbierto.setTorneoId(100L);
+        torneoAbierto.setJuegoId(1L);
+        torneoAbierto.setModalidad("EQUIPOS");
         torneoAbierto.setEstado("ABIERTO");
         torneoAbierto.setCupoMaximo(16);
         torneoAbierto.setCupoActual(0);
@@ -121,6 +125,9 @@ public class InscripcionServiceImplTest {
         equipo.setEquipoId(50L);
         equipo.setNombre("Los Halcones");
         equipo.setEstado(true);
+        equipo.setJuegoPrincipalId(1L);
+        when(juegoClient.getJuegoById(1L)).thenReturn(new com.esports.registrationservice.clients.JuegoClient.Juego(2,true));
+        when(equipoClient.miembros(50L)).thenReturn(List.of(new EquipoClient.Miembro(1L),new EquipoClient.Miembro(2L)));
 
         when(torneoClient.getTorneoById(100L)).thenReturn(torneoAbierto);
         when(inscripcionRepository.countByTorneoIdAndEstado(100L, Inscripcion.Estado.CONFIRMADA)).thenReturn(0L);
@@ -132,7 +139,7 @@ public class InscripcionServiceImplTest {
         Inscripcion result = inscripcionService.save(inscripcionDTOEquipo);
 
         assertThat(result).isNotNull();
-        assertThat(result.getEstado()).isEqualTo(Inscripcion.Estado.CONFIRMADA);
+        assertThat(result.getEstado()).isEqualTo(Inscripcion.Estado.PENDIENTE);
         verify(inscripcionRepository, times(1)).save(any(Inscripcion.class));
     }
 
@@ -191,6 +198,7 @@ public class InscripcionServiceImplTest {
     @Test
     @DisplayName("Debe crear una inscripcion individual cuando todo es valido")
     public void shouldSaveInscripcionIndividual() {
+        torneoAbierto.setModalidad("INDIVIDUAL");
         UsuarioDTO usuario = new UsuarioDTO();
         usuario.setUsuarioId(20L);
         usuario.setNickname("ProGamer");
@@ -213,6 +221,7 @@ public class InscripcionServiceImplTest {
     @Test
     @DisplayName("Debe lanzar excepcion cuando el jugador ya esta inscrito en el torneo")
     public void shouldNotSaveWhenJugadorYaInscrito() {
+        torneoAbierto.setModalidad("INDIVIDUAL");
         UsuarioDTO usuario = new UsuarioDTO();
         usuario.setUsuarioId(20L);
         usuario.setEstado("ACTIVO");
@@ -254,12 +263,13 @@ public class InscripcionServiceImplTest {
     @Test
     @DisplayName("Debe actualizar el estado de una inscripcion")
     public void shouldUpdateEstado() {
+        inscripcionPrueba.setEstado(Inscripcion.Estado.PENDIENTE);
         when(inscripcionRepository.findById(1L)).thenReturn(Optional.of(inscripcionPrueba));
         when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Inscripcion result = inscripcionService.actualizarEstado(1L, "PENDIENTE");
+        Inscripcion result = inscripcionService.actualizarEstado(1L, "CONFIRMADA");
 
-        assertThat(result.getEstado()).isEqualTo(Inscripcion.Estado.PENDIENTE);
+        assertThat(result.getEstado()).isEqualTo(Inscripcion.Estado.CONFIRMADA);
         verify(inscripcionRepository, times(1)).save(inscripcionPrueba);
     }
 

@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class TorneoDTO {
     private Long torneoId;
+    private Long juegoId;
+    private String modalidad;
     private String nombre;
     private Integer cupoMaximo;
     private Integer cupoActual;

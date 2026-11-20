@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "inscripciones")
+@Table(name = "inscripciones",uniqueConstraints={@UniqueConstraint(columnNames={"torneo_id","equipo_id"}),@UniqueConstraint(columnNames={"torneo_id","jugador_id"})})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -45,7 +45,7 @@ public class Inscripcion {
 
 
     @Column(name = "fecha_inscripcion", nullable = false)
-    private LocalDateTime fechaInscripcion = LocalDateTime.now();
+    private LocalDateTime fechaInscripcion = com.esports.common.ArenaTime.now();
 
 
     public enum TipoParticipante {
@@ -57,6 +57,7 @@ public class Inscripcion {
     public enum Estado {
         PENDIENTE,
         CONFIRMADA,
+        RECHAZADA,
         CANCELADA
     }
 }

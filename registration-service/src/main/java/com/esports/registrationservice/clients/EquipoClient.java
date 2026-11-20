@@ -6,9 +6,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 
-@FeignClient(name = "team-service", url = "localhost:8003/api/v1/equipos")
+@FeignClient(name = "team-service", path = "/api/v1/equipos")
 public interface EquipoClient {
 
     @GetMapping("/{id}")
     EquipoDTO getEquipoById(@PathVariable Long id);
+    record Miembro(Long usuarioId) {}
+    @GetMapping("/{id}/miembros") java.util.List<Miembro> miembros(@PathVariable Long id);
 }
