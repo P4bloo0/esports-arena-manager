@@ -154,3 +154,6 @@ springdoc:
         url: /api-docs/notificaciones
       - name: auth
         url: /api-docs/auth
+
+arena:
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173}
