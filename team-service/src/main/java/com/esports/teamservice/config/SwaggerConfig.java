@@ -1,19 +1,10 @@
 package com.esports.teamservice.config;
-
-import io.swagger.v3.oas.models.OpenAPI;
+import org.springframework.context.annotation.*;
+import io.swagger.v3.oas.models.*;
 import io.swagger.v3.oas.models.info.Info;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
-public class SwaggerConfig {
-
-    @Bean
-    public OpenAPI customOpenApi() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("API Team service")
-                        .version("1.0")
-                        .description("Gestion de equipos de esport arena manager"));
-    }
+import io.swagger.v3.oas.models.security.*;
+@Configuration public class SwaggerConfig {
+ @Bean OpenAPI customOpenApi() { return new OpenAPI().info(new Info().title("eSports: team-service").version("EP3"))
+  .components(new Components().addSecuritySchemes("bearerAuth",new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")))
+  .addSecurityItem(new SecurityRequirement().addList("bearerAuth")); }
 }

@@ -74,6 +74,7 @@ public class EquipoController {
             @ApiResponse(responseCode = "201", description = "Equipo creado exitosamente"),
             @ApiResponse(responseCode = "400", description = "Datos invalidos o nombre duplicado")
     })
+    @org.springframework.security.access.prepost.PreAuthorize("@equipoAccess.create(#dto.capitanId)")
     public ResponseEntity<Equipo> save(@Valid @RequestBody EquipoDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.equipoService.save(dto));
     }
@@ -84,6 +85,7 @@ public class EquipoController {
             @ApiResponse(responseCode = "201", description = "Miembro agregado exitosamente"),
             @ApiResponse(responseCode = "400", description = "Usuario ya miembro o equipo inactivo")
     })
+    @org.springframework.security.access.prepost.PreAuthorize("@equipoAccess.manage(#dto.equipoId)")
     public ResponseEntity<MiembroEquipo> agregarMiembro(@Valid @RequestBody MiembroEquipoDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.equipoService.agregarMiembro(dto));
     }
@@ -94,6 +96,7 @@ public class EquipoController {
             @ApiResponse(responseCode = "200", description = "Equipo actualizado"),
             @ApiResponse(responseCode = "400", description = "Equipo no encontrado")
     })
+    @org.springframework.security.access.prepost.PreAuthorize("@equipoAccess.manage(#id)")
     public ResponseEntity<Equipo> update(
             @Parameter(description = "Id del equipo a actualizar", required = true, example = "1")
             @PathVariable Long id,
@@ -107,6 +110,7 @@ public class EquipoController {
             @ApiResponse(responseCode = "200", description = "Equipo desactivado"),
             @ApiResponse(responseCode = "400", description = "Equipo no encontrado")
     })
+    @org.springframework.security.access.prepost.PreAuthorize("@equipoAccess.manage(#id)")
     public ResponseEntity<Equipo> desactivar(
             @Parameter(description = "Id del equipo a desactivar", required = true, example = "1")
             @PathVariable Long id) {

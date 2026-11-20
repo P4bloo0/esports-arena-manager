@@ -1,7 +1,8 @@
 package com.esports.teamservice.exceptions;
 
-public class EquipoException extends RuntimeException {
+public class EquipoException extends com.esports.common.ArenaException {
     public EquipoException(String message){
-        super(message);
+        super(400,message);
     }
+    public EquipoException(String message,int status) { super(status,message); }
 }

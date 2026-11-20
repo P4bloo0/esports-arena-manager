@@ -9,7 +9,7 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-@Table(name = "miembros_equipo")
+@Table(name = "miembros_equipo", uniqueConstraints=@UniqueConstraint(columnNames={"equipo_id","usuario_id"}))
 @NoArgsConstructor
 
 // jugador tdel team

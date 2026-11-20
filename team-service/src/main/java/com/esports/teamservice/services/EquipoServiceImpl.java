@@ -42,7 +42,7 @@ public class EquipoServiceImpl implements EquipoService{
     @Override//busca un equipo con la id si no existe lanza una excepción
     public Equipo findById(Long id){
         return this.equipoRepository.findById(id)
-                .orElseThrow(()-> new EquipoException("Equipo con id '" + id + "' no encontrado"));
+                .orElseThrow(()-> new EquipoException("Equipo con id '" + id + "' no encontrado",404));
     }
 
     @Transactional(readOnly = true)
@@ -76,17 +76,27 @@ public class EquipoServiceImpl implements EquipoService{
         equipo.setCapitanId(dto.getCapitanId());
         equipo.setJuegoPrincipalId(dto.getJuegoPrincipalId());
         equipo.setEstado(true);
-        return this.equipoRepository.save(equipo);
+        Equipo guardado=this.equipoRepository.save(equipo);
+        MiembroEquipo capitan=new MiembroEquipo(); capitan.setEquipoId(guardado.getEquipoId()); capitan.setUsuarioId(dto.getCapitanId()); capitan.setRolDentroEquipo("CAPITAN");
+        this.miembroEquipoRepository.save(capitan);
+        return guardado;
     }
 
     @Transactional
     @Override//esto va a actualizar los datos del equipo existente
     public Equipo update(Long id, EquipoDTO dto){
         return this.equipoRepository.findById(id).map(equipo -> {
+            if(this.equipoRepository.findByNombre(dto.getNombre()).filter(e -> !e.getEquipoId().equals(id)).isPresent()) throw new EquipoException("Ya existe otro equipo con ese nombre");
+            this.usuarioClient.getUsuarioById(dto.getCapitanId());
+            this.juegoClient.getJuegoById(dto.getJuegoPrincipalId());
             equipo.setNombre(dto.getNombre());
+            equipo.setJuegoPrincipalId(dto.getJuegoPrincipalId());
+            for(var miembro:this.miembroEquipoRepository.findByEquipoId(id)) { if("CAPITAN".equals(miembro.getRolDentroEquipo())) { miembro.setRolDentroEquipo("TITULAR"); this.miembroEquipoRepository.save(miembro); } }
+            var nuevo=this.miembroEquipoRepository.findByEquipoIdAndUsuarioId(id,dto.getCapitanId()).orElseGet(MiembroEquipo::new);
+            nuevo.setEquipoId(id); nuevo.setUsuarioId(dto.getCapitanId()); nuevo.setRolDentroEquipo("CAPITAN"); this.miembroEquipoRepository.save(nuevo);
             equipo.setCapitanId(dto.getCapitanId());
             return this.equipoRepository.save(equipo);
-        }).orElseThrow(() -> new EquipoException("Equipo con id '" + id + " no encontrado"));
+        }).orElseThrow(() -> new EquipoException("Equipo con id '" + id + " no encontrado",404));
     }
 
     @Transactional
@@ -95,7 +105,7 @@ public class EquipoServiceImpl implements EquipoService{
         return this.equipoRepository.findById(id).map(equipo -> {
             equipo.setEstado(false);
             return this.equipoRepository.save(equipo);
-        }).orElseThrow(() -> new EquipoException("Equipo con id '" + id + "' no encontrado"));
+        }).orElseThrow(() -> new EquipoException("Equipo con id '" + id + "' no encontrado",404));
     }
 
     @Transactional

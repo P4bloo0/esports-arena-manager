@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface MiembroEquipoRepository extends JpaRepository<MiembroEquipo, Long> {
+    List<MiembroEquipo> findByUsuarioId(Long usuarioId);
 
     List<MiembroEquipo> findByEquipoId(Long equipoId);
 
