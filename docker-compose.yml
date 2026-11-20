@@ -5,7 +5,7 @@ services:
     container_name: mysql
     restart: unless-stopped
     environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
       MYSQL_ROOT_HOST: "%"
     ports:
       - "3307:3306"
@@ -41,7 +41,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     depends_on:
       - eureka-service
     networks:
@@ -57,10 +59,13 @@ services:
     ports:
       - "8011:8011"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_auth?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -79,10 +84,13 @@ services:
     ports:
       - "8001:8001"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_user?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -101,10 +109,13 @@ services:
     ports:
       - "8002:8002"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_game?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -123,10 +134,13 @@ services:
     ports:
       - "8003:8003"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_team?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -145,10 +159,13 @@ services:
     ports:
       - "8004:8004"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_tournament?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -167,10 +184,13 @@ services:
     ports:
       - "8005:8005"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_registration?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -189,10 +209,13 @@ services:
     ports:
       - "8006:8006"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_match?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -211,10 +234,13 @@ services:
     ports:
       - "8007:8007"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_result?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -233,10 +259,13 @@ services:
     ports:
       - "8008:8008"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_ranking?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -255,10 +284,13 @@ services:
     ports:
       - "8009:8009"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_sanction?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -277,10 +309,13 @@ services:
     ports:
       - "8010:8010"
     environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_notification?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Ejecuta tools/configurar.ps1}
+      JWT_SECRET: ${JWT_SECRET:?Ejecuta tools/configurar.ps1}
+      ARENA_INTERNAL_SECRET: ${ARENA_INTERNAL_SECRET:?Ejecuta tools/configurar.ps1}
     depends_on:
       mysql:
         condition: service_healthy
