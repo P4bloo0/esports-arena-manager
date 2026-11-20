@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,7 +32,9 @@ public class ResultadoServiceImplTest {
 
     @Mock
     private PartidaClient partidaClient;
-    @Mock private RankingSync rankingSync;
+
+    @Mock
+    private RankingSync rankingSync;
 
     @InjectMocks
     private ResultadoServiceImpl resultadoService;
@@ -47,7 +51,8 @@ public class ResultadoServiceImplTest {
         resultadoPrueba.setGanadorId(10L);
         resultadoPrueba.setPuntajeA(3);
         resultadoPrueba.setPuntajeB(1);
-        resultadoPrueba.setEstadoValidacion(Resultado.EstadoValidacion.PENDIENTE);
+        resultadoPrueba.setEstadoValidacion(
+                Resultado.EstadoValidacion.PENDIENTE);
 
         resultadoDTO = new ResultadoDTO();
         resultadoDTO.setPartidaId(200L);
@@ -66,7 +71,8 @@ public class ResultadoServiceImplTest {
     @Test
     @DisplayName("Debe retornar todos los resultados")
     public void shouldFindAllResultados() {
-        when(resultadoRepository.findAll()).thenReturn(List.of(resultadoPrueba));
+        when(resultadoRepository.findAll())
+                .thenReturn(List.of(resultadoPrueba));
 
         List<Resultado> result = resultadoService.findAll();
 
@@ -77,7 +83,8 @@ public class ResultadoServiceImplTest {
     @Test
     @DisplayName("Debe encontrar un resultado por su id")
     public void shouldFindResultadoById() {
-        when(resultadoRepository.findById(1L)).thenReturn(Optional.of(resultadoPrueba));
+        when(resultadoRepository.findById(1L))
+                .thenReturn(Optional.of(resultadoPrueba));
 
         Resultado result = resultadoService.findById(1L);
 
@@ -88,79 +95,100 @@ public class ResultadoServiceImplTest {
     @Test
     @DisplayName("Debe lanzar excepcion cuando el resultado no existe")
     public void shouldThrowWhenResultadoNotFound() {
-        when(resultadoRepository.findById(999L)).thenReturn(Optional.empty());
+        when(resultadoRepository.findById(999L))
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> resultadoService.findById(999L))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, times(1)).findById(999L);
     }
 
     @Test
     @DisplayName("Debe registrar un resultado valido")
     public void shouldSaveResultado() {
-        when(partidaClient.getPartidaById(200L)).thenReturn(partidaEnCurso);
-        when(resultadoRepository.findByPartidaId(200L)).thenReturn(Optional.empty());
-        when(resultadoRepository.save(any(Resultado.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(partidaClient.getPartidaById(200L))
+                .thenReturn(partidaEnCurso);
+        when(resultadoRepository.findByPartidaId(200L))
+                .thenReturn(Optional.empty());
+        when(resultadoRepository.save(any(Resultado.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         Resultado result = resultadoService.save(resultadoDTO);
 
         assertThat(result).isNotNull();
-        assertThat(result.getEstadoValidacion()).isEqualTo(Resultado.EstadoValidacion.PENDIENTE);
-        verify(resultadoRepository, times(1)).save(any(Resultado.class));
+        assertThat(result.getEstadoValidacion())
+                .isEqualTo(Resultado.EstadoValidacion.PENDIENTE);
+
+        verify(resultadoRepository, times(1))
+                .save(any(Resultado.class));
     }
 
     @Test
-    @DisplayName("Debe lanzar excepcion al registrar resultado de una partida inexistente")
+    @DisplayName("Debe rechazar resultado de una partida inexistente")
     public void shouldNotSaveWhenPartidaNotExists() {
-        when(partidaClient.getPartidaById(200L)).thenThrow(mock(feign.FeignException.class));
+        when(partidaClient.getPartidaById(200L))
+                .thenThrow(mock(feign.FeignException.class));
 
         assertThatThrownBy(() -> resultadoService.save(resultadoDTO))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, never()).save(any(Resultado.class));
     }
 
     @Test
-    @DisplayName("Debe lanzar excepcion al registrar resultado de una partida cancelada")
+    @DisplayName("Debe rechazar resultado de una partida cancelada")
     public void shouldNotSaveWhenPartidaCancelada() {
         partidaEnCurso.setEstado("CANCELADA");
-        when(partidaClient.getPartidaById(200L)).thenReturn(partidaEnCurso);
+        when(partidaClient.getPartidaById(200L))
+                .thenReturn(partidaEnCurso);
 
         assertThatThrownBy(() -> resultadoService.save(resultadoDTO))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, never()).save(any(Resultado.class));
     }
 
     @Test
-    @DisplayName("Debe lanzar excepcion al registrar resultado de una partida no iniciada")
+    @DisplayName("Debe rechazar resultado de una partida no iniciada")
     public void shouldNotSaveWhenPartidaProgramada() {
         partidaEnCurso.setEstado("PROGRAMADA");
-        when(partidaClient.getPartidaById(200L)).thenReturn(partidaEnCurso);
+        when(partidaClient.getPartidaById(200L))
+                .thenReturn(partidaEnCurso);
 
         assertThatThrownBy(() -> resultadoService.save(resultadoDTO))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, never()).save(any(Resultado.class));
     }
 
     @Test
-    @DisplayName("Debe lanzar excepcion cuando ya existe un resultado para la partida")
+    @DisplayName("Debe rechazar un resultado duplicado para la partida")
     public void shouldNotSaveWhenResultadoYaExiste() {
-        when(partidaClient.getPartidaById(200L)).thenReturn(partidaEnCurso);
-        when(resultadoRepository.findByPartidaId(200L)).thenReturn(Optional.of(resultadoPrueba));
+        when(partidaClient.getPartidaById(200L))
+                .thenReturn(partidaEnCurso);
+        when(resultadoRepository.findByPartidaId(200L))
+                .thenReturn(Optional.of(resultadoPrueba));
 
         assertThatThrownBy(() -> resultadoService.save(resultadoDTO))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, never()).save(any(Resultado.class));
     }
 
     @Test
-    @DisplayName("Debe lanzar excepcion cuando el ganador no es participante de la partida")
+    @DisplayName("Debe rechazar un ganador que no participa en la partida")
     public void shouldNotSaveWhenGanadorNoParticipa() {
         resultadoDTO.setGanadorId(999L);
-        when(partidaClient.getPartidaById(200L)).thenReturn(partidaEnCurso);
-        when(resultadoRepository.findByPartidaId(200L)).thenReturn(Optional.empty());
+
+        when(partidaClient.getPartidaById(200L))
+                .thenReturn(partidaEnCurso);
+        when(resultadoRepository.findByPartidaId(200L))
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> resultadoService.save(resultadoDTO))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, never()).save(any(Resultado.class));
     }
 
@@ -170,12 +198,15 @@ public class ResultadoServiceImplTest {
         ResultadoDTO cambios = new ResultadoDTO();
         cambios.setPartidaId(200L);
         cambios.setGanadorId(20L);
-        when(partidaClient.getPartidaById(200L)).thenReturn(partidaEnCurso);
         cambios.setPuntajeA(2);
         cambios.setPuntajeB(3);
 
-        when(resultadoRepository.findById(1L)).thenReturn(Optional.of(resultadoPrueba));
-        when(resultadoRepository.save(any(Resultado.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(partidaClient.getPartidaById(200L))
+                .thenReturn(partidaEnCurso);
+        when(resultadoRepository.findById(1L))
+                .thenReturn(Optional.of(resultadoPrueba));
+        when(resultadoRepository.save(any(Resultado.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         Resultado result = resultadoService.update(1L, cambios);
 
@@ -184,37 +215,83 @@ public class ResultadoServiceImplTest {
     }
 
     @Test
-    @DisplayName("Debe lanzar excepcion al actualizar un resultado ya validado")
+    @DisplayName("Debe rechazar la actualizacion de un resultado validado")
     public void shouldNotUpdateWhenValidado() {
-        resultadoPrueba.setEstadoValidacion(Resultado.EstadoValidacion.VALIDADO);
-        when(resultadoRepository.findById(1L)).thenReturn(Optional.of(resultadoPrueba));
+        resultadoPrueba.setEstadoValidacion(
+                Resultado.EstadoValidacion.VALIDADO);
 
-        assertThatThrownBy(() -> resultadoService.update(1L, resultadoDTO))
+        when(resultadoRepository.findById(1L))
+                .thenReturn(Optional.of(resultadoPrueba));
+
+        assertThatThrownBy(
+                () -> resultadoService.update(1L, resultadoDTO))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, never()).save(any(Resultado.class));
     }
 
     @Test
     @DisplayName("Debe validar un resultado pendiente")
     public void shouldValidarResultado() {
-        when(resultadoRepository.findById(1L)).thenReturn(Optional.of(resultadoPrueba));
-        when(resultadoRepository.save(any(Resultado.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(partidaClient.getPartidaById(200L))
+                .thenReturn(partidaEnCurso);
+        when(resultadoRepository.findById(1L))
+                .thenReturn(Optional.of(resultadoPrueba));
+        when(resultadoRepository.save(any(Resultado.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         Resultado result = resultadoService.validar(1L);
 
-        assertThat(result.getEstadoValidacion()).isEqualTo(Resultado.EstadoValidacion.VALIDADO);
+        assertThat(result.getEstadoValidacion())
+                .isEqualTo(Resultado.EstadoValidacion.VALIDADO);
+
         verify(resultadoRepository, times(1)).save(resultadoPrueba);
     }
 
     @Test
-    @DisplayName("Debe lanzar excepcion al validar un resultado que no esta pendiente")
+    @DisplayName("Debe rechazar la validacion si el resultado no esta pendiente")
     public void shouldNotValidarWhenNotPendiente() {
-        resultadoPrueba.setEstadoValidacion(Resultado.EstadoValidacion.ANULADO);
-        when(resultadoRepository.findById(1L)).thenReturn(Optional.of(resultadoPrueba));
+        resultadoPrueba.setEstadoValidacion(
+                Resultado.EstadoValidacion.ANULADO);
+
+        when(resultadoRepository.findById(1L))
+                .thenReturn(Optional.of(resultadoPrueba));
 
         assertThatThrownBy(() -> resultadoService.validar(1L))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, never()).save(any(Resultado.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"CANCELADA", "PROGRAMADA"})
+    @DisplayName("Debe rechazar validar o editar resultados de partidas no habilitadas")
+    public void shouldRejectValidarAndUpdateWhenPartidaCannotHaveResults(
+            String estado) {
+
+        partidaEnCurso.setEstado(estado);
+
+        when(resultadoRepository.findById(1L))
+                .thenReturn(Optional.of(resultadoPrueba));
+        when(partidaClient.getPartidaById(200L))
+                .thenReturn(partidaEnCurso);
+
+        assertThatThrownBy(() -> resultadoService.validar(1L))
+                .isInstanceOfSatisfying(
+                        ResultadoException.class,
+                        e -> assertThat(e.status()).isEqualTo(409));
+
+        assertThatThrownBy(
+                () -> resultadoService.update(1L, resultadoDTO))
+                .isInstanceOfSatisfying(
+                        ResultadoException.class,
+                        e -> assertThat(e.status()).isEqualTo(409));
+
+        assertThat(resultadoPrueba.getEstadoValidacion())
+                .isEqualTo(Resultado.EstadoValidacion.PENDIENTE);
+
+        verify(resultadoRepository, never()).save(any(Resultado.class));
+        verifyNoInteractions(rankingSync);
     }
 
     @Test
@@ -223,27 +300,37 @@ public class ResultadoServiceImplTest {
         AnulacionDTO anulacion = new AnulacionDTO();
         anulacion.setJustificacion("Error de arbitraje");
 
-        when(resultadoRepository.findById(1L)).thenReturn(Optional.of(resultadoPrueba));
-        when(resultadoRepository.save(any(Resultado.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(resultadoRepository.findById(1L))
+                .thenReturn(Optional.of(resultadoPrueba));
+        when(resultadoRepository.save(any(Resultado.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         Resultado result = resultadoService.anular(1L, anulacion);
 
-        assertThat(result.getEstadoValidacion()).isEqualTo(Resultado.EstadoValidacion.ANULADO);
-        assertThat(result.getJustificacionAnulacion()).isEqualTo("Error de arbitraje");
+        assertThat(result.getEstadoValidacion())
+                .isEqualTo(Resultado.EstadoValidacion.ANULADO);
+        assertThat(result.getJustificacionAnulacion())
+                .isEqualTo("Error de arbitraje");
+
         verify(resultadoRepository, times(1)).save(resultadoPrueba);
     }
 
     @Test
-    @DisplayName("Debe lanzar excepcion al anular un resultado ya anulado")
+    @DisplayName("Debe rechazar la anulacion de un resultado ya anulado")
     public void shouldNotAnularWhenYaAnulado() {
-        resultadoPrueba.setEstadoValidacion(Resultado.EstadoValidacion.ANULADO);
+        resultadoPrueba.setEstadoValidacion(
+                Resultado.EstadoValidacion.ANULADO);
+
         AnulacionDTO anulacion = new AnulacionDTO();
         anulacion.setJustificacion("Intento repetido");
 
-        when(resultadoRepository.findById(1L)).thenReturn(Optional.of(resultadoPrueba));
+        when(resultadoRepository.findById(1L))
+                .thenReturn(Optional.of(resultadoPrueba));
 
-        assertThatThrownBy(() -> resultadoService.anular(1L, anulacion))
+        assertThatThrownBy(
+                () -> resultadoService.anular(1L, anulacion))
                 .isInstanceOf(ResultadoException.class);
+
         verify(resultadoRepository, never()).save(any(Resultado.class));
     }
 }

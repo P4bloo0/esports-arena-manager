@@ -142,6 +142,11 @@ public class ResultadoServiceImpl implements ResultadoService {
             }
 
             var partida=partidaClient.getPartidaById(resultado.getPartidaId());
+            if (!"EN_CURSO".equals(partida.getEstado())
+                    && !"FINALIZADA".equals(partida.getEstado())) {
+                throw new ResultadoException(
+                        "La partida debe estar EN_CURSO o FINALIZADA", 409);
+            }
             if(!java.util.Objects.equals(dto.getPartidaId(),resultado.getPartidaId())) throw new ResultadoException("No puedes cambiar la partida de un resultado");
             if(!dto.getGanadorId().equals(partida.getParticipanteAId()) && !dto.getGanadorId().equals(partida.getParticipanteBId())) throw new ResultadoException("El ganador no pertenece a la partida");
             resultado.setGanadorId(dto.getGanadorId());
@@ -156,18 +161,32 @@ public class ResultadoServiceImpl implements ResultadoService {
     @Override
     public Resultado validar(Long id) {
         log.info("Validando resultado con id {}", id);
-        return this.resultadoRepository.findById(id).map(resultado -> {
 
-            if (resultado.getEstadoValidacion() != Resultado.EstadoValidacion.PENDIENTE) {
-                throw new ResultadoException("Solo se pueden validar resultados en estado PENDIENTE. Estado actual: " + resultado.getEstadoValidacion());
+        return this.resultadoRepository.findById(id).map(resultado -> {
+            if (resultado.getEstadoValidacion()
+                    != Resultado.EstadoValidacion.PENDIENTE) {
+                throw new ResultadoException(
+                        "Solo se pueden validar resultados en estado PENDIENTE. Estado actual: "
+                                + resultado.getEstadoValidacion());
+            }
+
+            PartidaDTO partida =
+                    partidaClient.getPartidaById(resultado.getPartidaId());
+
+            if (!"EN_CURSO".equals(partida.getEstado())
+                    && !"FINALIZADA".equals(partida.getEstado())) {
+                throw new ResultadoException(
+                        "La partida debe estar EN_CURSO o FINALIZADA", 409);
             }
 
             resultado.setEstadoValidacion(Resultado.EstadoValidacion.VALIDADO);
             Resultado validado = this.resultadoRepository.save(resultado);
             rankingSync.enqueue(resultado.getPartidaId());
+
             log.info("Resultado con id {} validado exitosamente", id);
             return validado;
-        }).orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado",404));
+        }).orElseThrow(() -> new ResultadoException(
+                "Resultado con id '" + id + "' no encontrado", 404));
     }
 
     // anula un resultado con una justificacion obligatoria
