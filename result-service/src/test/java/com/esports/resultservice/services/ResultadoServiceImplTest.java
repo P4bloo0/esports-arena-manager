@@ -30,6 +30,7 @@ public class ResultadoServiceImplTest {
 
     @Mock
     private PartidaClient partidaClient;
+    @Mock private RankingSync rankingSync;
 
     @InjectMocks
     private ResultadoServiceImpl resultadoService;
@@ -167,7 +168,9 @@ public class ResultadoServiceImplTest {
     @DisplayName("Debe actualizar un resultado pendiente")
     public void shouldUpdateResultado() {
         ResultadoDTO cambios = new ResultadoDTO();
+        cambios.setPartidaId(200L);
         cambios.setGanadorId(20L);
+        when(partidaClient.getPartidaById(200L)).thenReturn(partidaEnCurso);
         cambios.setPuntajeA(2);
         cambios.setPuntajeB(3);
 

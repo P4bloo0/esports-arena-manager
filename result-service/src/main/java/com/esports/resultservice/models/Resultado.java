@@ -51,7 +51,7 @@ public class Resultado {
     private String justificacionAnulacion;
 
     @Column(name = "fecha_registro", nullable = false)
-    private LocalDateTime fechaRegistro = LocalDateTime.now();
+    private LocalDateTime fechaRegistro = com.esports.common.ArenaTime.now();
 
 
     public enum EstadoValidacion {

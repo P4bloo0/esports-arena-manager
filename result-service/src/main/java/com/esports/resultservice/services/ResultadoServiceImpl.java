@@ -26,6 +26,7 @@ public class ResultadoServiceImpl implements ResultadoService {
 
     @Autowired
     private PartidaClient partidaClient;
+    @Autowired private RankingSync rankingSync;
 
     // devuelve todos los resultados registrados
     @Transactional(readOnly = true)
@@ -41,7 +42,7 @@ public class ResultadoServiceImpl implements ResultadoService {
     public Resultado findById(Long id) {
         log.info("Buscando resultado con id {}", id);
         return this.resultadoRepository.findById(id)
-                .orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado"));
+                .orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado",404));
     }
 
     // busca el resultado de una partida especifica
@@ -117,7 +118,7 @@ public class ResultadoServiceImpl implements ResultadoService {
         resultado.setPuntajeA(dto.getPuntajeA());
         resultado.setPuntajeB(dto.getPuntajeB());
         resultado.setEstadoValidacion(Resultado.EstadoValidacion.PENDIENTE);
-        resultado.setFechaRegistro(LocalDateTime.now());
+        resultado.setFechaRegistro(com.esports.common.ArenaTime.now());
 
         Resultado guardado = this.resultadoRepository.save(resultado);
         log.info("Resultado registrado exitosamente con id {}", guardado.getResultadoId());
@@ -140,11 +141,14 @@ public class ResultadoServiceImpl implements ResultadoService {
                 throw new ResultadoException("No se puede modificar un resultado anulado");
             }
 
+            var partida=partidaClient.getPartidaById(resultado.getPartidaId());
+            if(!java.util.Objects.equals(dto.getPartidaId(),resultado.getPartidaId())) throw new ResultadoException("No puedes cambiar la partida de un resultado");
+            if(!dto.getGanadorId().equals(partida.getParticipanteAId()) && !dto.getGanadorId().equals(partida.getParticipanteBId())) throw new ResultadoException("El ganador no pertenece a la partida");
             resultado.setGanadorId(dto.getGanadorId());
             resultado.setPuntajeA(dto.getPuntajeA());
             resultado.setPuntajeB(dto.getPuntajeB());
             return this.resultadoRepository.save(resultado);
-        }).orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado"));
+        }).orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado",404));
     }
 
     // valida un resultado pendiente (solo organizador deberia poder hacer esto)
@@ -160,9 +164,10 @@ public class ResultadoServiceImpl implements ResultadoService {
 
             resultado.setEstadoValidacion(Resultado.EstadoValidacion.VALIDADO);
             Resultado validado = this.resultadoRepository.save(resultado);
+            rankingSync.enqueue(resultado.getPartidaId());
             log.info("Resultado con id {} validado exitosamente", id);
             return validado;
-        }).orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado"));
+        }).orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado",404));
     }
 
     // anula un resultado con una justificacion obligatoria
@@ -179,8 +184,9 @@ public class ResultadoServiceImpl implements ResultadoService {
             resultado.setEstadoValidacion(Resultado.EstadoValidacion.ANULADO);
             resultado.setJustificacionAnulacion(dto.getJustificacion());
             Resultado anulado = this.resultadoRepository.save(resultado);
+            rankingSync.enqueue(resultado.getPartidaId());
             log.warn("Resultado con id {} anulado. Motivo: {}", id, dto.getJustificacion());
             return anulado;
-        }).orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado"));
+        }).orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado",404));
     }
 }

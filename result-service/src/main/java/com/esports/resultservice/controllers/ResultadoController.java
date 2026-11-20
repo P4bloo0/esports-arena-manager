@@ -49,24 +49,28 @@ public class ResultadoController {
 
     // POST /api/v1/resultados
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("@resultadoAccess.partida(#dto.partidaId)")
     public ResponseEntity<Resultado> save(@Valid @RequestBody ResultadoDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.resultadoService.save(dto));
     }
 
     // PUT /api/v1/resultados/1
     @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("@resultadoAccess.resultado(#id)")
     public ResponseEntity<Resultado> update(@PathVariable Long id, @Valid @RequestBody ResultadoDTO dto) {
         return ResponseEntity.ok(this.resultadoService.update(id, dto));
     }
 
     // PATCH /api/v1/resultados/1/validar
     @PatchMapping("/{id}/validar")
+    @org.springframework.security.access.prepost.PreAuthorize("@resultadoAccess.resultado(#id)")
     public ResponseEntity<Resultado> validar(@PathVariable Long id) {
         return ResponseEntity.ok(this.resultadoService.validar(id));
     }
 
     // PATCH /api/v1/resultados/1/anular
     @PatchMapping("/{id}/anular")
+    @org.springframework.security.access.prepost.PreAuthorize("@resultadoAccess.resultado(#id)")
     public ResponseEntity<Resultado> anular(@PathVariable Long id, @Valid @RequestBody AnulacionDTO dto) {
         return ResponseEntity.ok(this.resultadoService.anular(id, dto));
     }
