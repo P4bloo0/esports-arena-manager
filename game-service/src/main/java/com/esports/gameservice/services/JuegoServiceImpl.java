@@ -33,7 +33,7 @@ public class JuegoServiceImpl implements JuegoService {
     @Override
     public Juego findById(Long id){
         return this.juegoRepository.findById(id)
-                .orElseThrow(()-> new JuegoException("El juego con id " + id + " no encontrado"));
+                .orElseThrow(()-> new JuegoException("El juego con id " + id + " no encontrado",404));
     }
 
     @Transactional
@@ -60,7 +60,7 @@ public class JuegoServiceImpl implements JuegoService {
             juego.setGenero(dto.getGenero());
             juego.setJugadoresPorEquipo(dto.getJugadoresPorEquipo());
             return this.juegoRepository.save(juego);
-        }).orElseThrow(() -> new JuegoException("Juego con id " + id + " no encontrado"));
+        }).orElseThrow(() -> new JuegoException("Juego con id " + id + " no encontrado",404));
     }
 
     @Transactional
@@ -69,7 +69,7 @@ public class JuegoServiceImpl implements JuegoService {
         return this.juegoRepository.findById(id).map(juego -> {
             juego.setEstado(false);
             return this.juegoRepository.save(juego);
-        }).orElseThrow(()-> new JuegoException("Juego con id " + id + " no encontrado"));
+        }).orElseThrow(()-> new JuegoException("Juego con id " + id + " no encontrado",404));
     }
 // holaaaaaaaaaaaaaaaaaaaaaa
 
