@@ -49,9 +49,15 @@ public class InscripcionController {
 
     // GET /api/v1/inscripciones/jugador/1
     @GetMapping("/jugador/{jugadorId}")
-    public ResponseEntity<List<Inscripcion>> findByJugador(@PathVariable Long jugadorId) {
-        com.esports.common.Actor.own(jugadorId);
-        return ResponseEntity.status(HttpStatus.OK).body(this.inscripcionService.findByJugadorId(jugadorId));
+    public ResponseEntity<List<Inscripcion>> findByJugador(
+            @PathVariable Long jugadorId) {
+
+        if (!com.esports.common.Actor.staff()) {
+            com.esports.common.Actor.own(jugadorId);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(this.inscripcionService.findByJugadorId(jugadorId));
     }
 
     // POST /api/v1/inscripciones
