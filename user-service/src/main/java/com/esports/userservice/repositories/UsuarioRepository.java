@@ -9,6 +9,7 @@ import java.util.Optional;
 // habla con la base de datos
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+    Optional<Usuario> findByCuentaId(String cuentaId);
 
     Optional<Usuario> findByNickname(String nickname);
 

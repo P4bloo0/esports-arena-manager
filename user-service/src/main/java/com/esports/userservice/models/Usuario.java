@@ -20,6 +20,9 @@ public class Usuario {
     @Column(name = "usuario_id")
     private Long usuarioId;
 
+    @Column(unique = true)
+    private String cuentaId;
+
     @NotBlank(message = "El nombre no puede estar vacio")
     @Column(nullable = false)
     private String nombre;

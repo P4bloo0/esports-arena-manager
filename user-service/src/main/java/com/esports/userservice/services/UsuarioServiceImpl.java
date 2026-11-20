@@ -37,7 +37,7 @@ public class UsuarioServiceImpl implements UsuarioService{
     @Override
     public Usuario findById(Long id){
         return this.usuarioRepository.findById(id).orElseThrow(
-                () -> new UsuarioException("el usuario con id " + id + " no se ha encontrado")
+                () -> new UsuarioException("el usuario con id " + id + " no se ha encontrado",404)
         );
     }
 
@@ -69,7 +69,10 @@ public class UsuarioServiceImpl implements UsuarioService{
     public Usuario update(Long id, UsuarioDTO dto){
         return this.usuarioRepository.findById(id).map(usuario -> {
             usuario.setNombre(dto.getNombre());
+            if(this.usuarioRepository.findByNickname(dto.getNickname()).filter(other -> !other.getUsuarioId().equals(id)).isPresent()
+                || this.usuarioRepository.findByEmail(dto.getEmail()).filter(other -> !other.getUsuarioId().equals(id)).isPresent()) throw com.esports.common.ArenaException.conflict("El apodo o correo ya esta registrado.");
             usuario.setNickname(dto.getNickname());
+            usuario.setEmail(dto.getEmail());
             return this.usuarioRepository.save(usuario);
         }).orElseThrow(
                 () -> new UsuarioException("Usuario con id " + id + " no encontrado")

@@ -15,6 +15,8 @@ public class UsuarioDTO {
     private String nombre;
 
     @NotBlank(message = "el nickname no puede estar vacio")
+    @Size(min=3,max=16,message="El apodo debe tener entre 3 y 16 caracteres")
+    @Pattern(regexp="^[^\\s]+$",message="El apodo no admite espacios")
     private String nickname;
 
     @NotBlank(message = "El email no puede estar vacio")

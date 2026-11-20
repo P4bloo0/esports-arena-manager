@@ -63,6 +63,7 @@ public class UsuarioController {
     public ResponseEntity<Usuario> findById(
             @Parameter(description = "Id del usuario a buscar", required = true, example = "1")
             @PathVariable Long id) {
+        com.esports.common.Actor.own(id);
         return ResponseEntity.status(HttpStatus.OK).body(this.usuarioService.findById(id));
     }
 
@@ -86,6 +87,7 @@ public class UsuarioController {
             @Parameter(description = "Id del usuario a actualizar", required = true, example = "1")
             @PathVariable Long id,
             @Valid @RequestBody UsuarioDTO dto) {
+        com.esports.common.Actor.own(id);
         return ResponseEntity.status(HttpStatus.OK).body(this.usuarioService.update(id, dto));
     }
 
