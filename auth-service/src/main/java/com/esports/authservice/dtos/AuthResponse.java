@@ -1,19 +1,5 @@
 package com.esports.authservice.dtos;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.util.Set;
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class AuthResponse {
-    private String token;
-    private String tokenType;
-    private String nickname;
-    private Set<String> roles;
+public record AuthResponse(String token,String tokenType,String nickname,Set<String> roles,Long userId) {
+ public String getToken() { return token; } public String getNickname() { return nickname; } public Set<String> getRoles() { return roles; }
 }

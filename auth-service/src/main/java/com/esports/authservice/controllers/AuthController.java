@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Autenticacion")
 public class AuthController {
+    @PostMapping("/renovar")
+    public AuthResponse renovar(@org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) { return authService.renovar(jwt.getSubject()); }
+    @PostMapping("/admin/cuentas")
+    public AuthResponse crearCuenta(@Valid @RequestBody RegisterRequest request,@RequestParam String rol) { return authService.registerRole(request,rol); }
 
     private final AuthService authService;
 

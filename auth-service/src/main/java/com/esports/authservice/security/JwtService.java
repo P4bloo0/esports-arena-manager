@@ -32,6 +32,7 @@ public class JwtService {
                 .issuedAt(ahora)
                 .expiresAt(ahora.plus(expirationMinutes, ChronoUnit.MINUTES))
                 .subject(usuario.getNickname())
+                .claim("userId", usuario.getPerfilId())
                 .claim("roles", roles)
                 .build();
 

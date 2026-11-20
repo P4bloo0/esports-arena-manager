@@ -1,140 +1,43 @@
 package com.esports.authservice.services;
-
-import com.esports.authservice.dtos.AuthResponse;
-import com.esports.authservice.dtos.LoginRequest;
-import com.esports.authservice.dtos.RegisterRequest;
-import com.esports.authservice.exceptions.AuthException;
-import com.esports.authservice.models.Rol;
-import com.esports.authservice.models.Usuario;
-import com.esports.authservice.repositories.RolRepository;
-import com.esports.authservice.repositories.UsuarioRepository;
+import com.esports.authservice.dtos.*;
+import com.esports.authservice.models.*;
+import com.esports.authservice.repositories.*;
 import com.esports.authservice.security.JwtService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import com.esports.authservice.clients.PerfilClient;
+import com.esports.authservice.exceptions.AuthException;
+import com.esports.common.ArenaException;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
-import java.util.Set;
-
+import java.util.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
-public class AuthServiceTest {
-
-    @Mock
-    private UsuarioRepository usuarioRepository;
-
-    @Mock
-    private RolRepository rolRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private JwtService jwtService;
-
-    @InjectMocks
-    private AuthService authService;
-
-    private RegisterRequest registerRequest;
-    private LoginRequest loginRequest;
-    private Rol rolJugador;
-    private Usuario usuarioPrueba;
-
-    @BeforeEach
-    public void setUp() {
-        registerRequest = new RegisterRequest();
-        registerRequest.setNickname("ProGamer");
-        registerRequest.setPassword("clave123");
-
-        loginRequest = new LoginRequest();
-        loginRequest.setNickname("ProGamer");
-        loginRequest.setPassword("clave123");
-
-        rolJugador = new Rol("JUGADOR");
-        rolJugador.setRolId(1L);
-
-        usuarioPrueba = new Usuario();
-        usuarioPrueba.setUsuarioId(1L);
-        usuarioPrueba.setNickname("ProGamer");
-        usuarioPrueba.setPassword("hash-clave123");
-        usuarioPrueba.setRoles(Set.of(rolJugador));
-    }
-
-    @Test
-    @DisplayName("Debe registrar un usuario nuevo con rol por defecto")
-    public void shouldRegisterUsuario() {
-        when(usuarioRepository.existsByNickname("ProGamer")).thenReturn(false);
-        when(rolRepository.findByNombre("JUGADOR")).thenReturn(Optional.of(rolJugador));
-        when(passwordEncoder.encode("clave123")).thenReturn("hash-clave123");
-        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(jwtService.generarToken(any(Usuario.class))).thenReturn("token-jwt");
-
-        AuthResponse result = authService.register(registerRequest);
-
-        assertThat(result.getToken()).isEqualTo("token-jwt");
-        assertThat(result.getNickname()).isEqualTo("ProGamer");
-        verify(usuarioRepository, times(1)).save(any(Usuario.class));
-    }
-
-    @Test
-    @DisplayName("Debe lanzar excepcion al registrar un nickname repetido")
-    public void shouldNotRegisterWhenNicknameRepetido() {
-        when(usuarioRepository.existsByNickname("ProGamer")).thenReturn(true);
-
-        assertThatThrownBy(() -> authService.register(registerRequest))
-                .isInstanceOf(AuthException.class);
-        verify(usuarioRepository, never()).save(any(Usuario.class));
-    }
-
-    @Test
-    @DisplayName("Debe lanzar excepcion al registrar con un rol inexistente")
-    public void shouldNotRegisterWhenRolNoExiste() {
-        registerRequest.setRoles(Set.of("SUPERADMIN"));
-        when(usuarioRepository.existsByNickname("ProGamer")).thenReturn(false);
-        when(rolRepository.findByNombre("SUPERADMIN")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> authService.register(registerRequest))
-                .isInstanceOf(AuthException.class);
-        verify(usuarioRepository, never()).save(any(Usuario.class));
-    }
-
-    @Test
-    @DisplayName("Debe autenticar un usuario con credenciales validas")
-    public void shouldLoginUsuario() {
-        when(usuarioRepository.findByNickname("ProGamer")).thenReturn(Optional.of(usuarioPrueba));
-        when(passwordEncoder.matches("clave123", "hash-clave123")).thenReturn(true);
-        when(jwtService.generarToken(usuarioPrueba)).thenReturn("token-jwt");
-
-        AuthResponse result = authService.login(loginRequest);
-
-        assertThat(result.getToken()).isEqualTo("token-jwt");
-        assertThat(result.getRoles()).contains("JUGADOR");
-    }
-
-    @Test
-    @DisplayName("Debe lanzar excepcion cuando el nickname no existe")
-    public void shouldNotLoginWhenNicknameNoExiste() {
-        when(usuarioRepository.findByNickname("ProGamer")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> authService.login(loginRequest))
-                .isInstanceOf(AuthException.class);
-    }
-
-    @Test
-    @DisplayName("Debe lanzar excepcion cuando la contrasena es incorrecta")
-    public void shouldNotLoginWhenPasswordIncorrecta() {
-        when(usuarioRepository.findByNickname("ProGamer")).thenReturn(Optional.of(usuarioPrueba));
-        when(passwordEncoder.matches("clave123", "hash-clave123")).thenReturn(false);
-
-        assertThatThrownBy(() -> authService.login(loginRequest))
-                .isInstanceOf(AuthException.class);
-    }
+class AuthServiceTest {
+ @Mock UsuarioRepository usuarios; @Mock RolRepository roles; @Mock PasswordEncoder encoder; @Mock JwtService jwt; @Mock PerfilClient perfiles;
+ @InjectMocks AuthService service;
+ RegisterRequest request; Usuario user; Rol jugador;
+ @BeforeEach void setup() {
+  request=new RegisterRequest(); request.setNickname("ProGamer"); request.setNombre("Jugador de prueba"); request.setEmail("jugador@example.test"); request.setPassword("clave1234");
+  jugador=new Rol("JUGADOR"); user=new Usuario(); user.setUsuarioId(5L); user.setNickname("ProGamer"); user.setPassword("hash"); user.setRoles(Set.of(jugador)); user.setActivo(true); user.setPerfilId(19L);
+ }
+ @Test void registraPerfilYDevuelveSuIdentidad() {
+  when(roles.findByNombre("JUGADOR")).thenReturn(Optional.of(jugador)); when(encoder.encode("clave1234")).thenReturn("hash");
+  when(usuarios.save(any())).thenAnswer(i -> i.getArgument(0)); when(perfiles.crear(any())).thenReturn(new PerfilClient.Perfil(19L,"ACTIVO")); when(jwt.generarToken(any())).thenReturn("token");
+  var respuesta=service.register(request); assertThat(respuesta.userId()).isEqualTo(19); assertThat(respuesta.roles()).containsExactly("JUGADOR");
+  verify(perfiles).crear(argThat(p -> p.email().equals("jugador@example.test") && p.cuentaId()!=null));
+ }
+ @Test void registroPublicoNoPermiteAdministrador() { request.setRoles(Set.of("ADMINISTRADOR")); assertThatThrownBy(() -> service.register(request)).isInstanceOf(AuthException.class); verifyNoInteractions(usuarios,perfiles,jwt); }
+ @Test void registroPublicoNoPermiteRolDesconocido() { request.setRoles(Set.of("SUPERADMIN")); assertThatThrownBy(() -> service.register(request)).isInstanceOf(AuthException.class); }
+ @Test void noRegistraNicknameExistente() { when(roles.findByNombre("JUGADOR")).thenReturn(Optional.of(jugador)); when(usuarios.findByNickname("ProGamer")).thenReturn(Optional.of(user)); assertThatThrownBy(() -> service.register(request)).isInstanceOf(AuthException.class); verifyNoInteractions(perfiles); }
+ @Test void loginValidoVerificaElEstadoDelPerfil() { login(); when(perfiles.buscar(19L)).thenReturn(new PerfilClient.Perfil(19L,"ACTIVO")); when(jwt.generarToken(user)).thenReturn("token"); assertThat(service.login(credentials()).userId()).isEqualTo(19); }
+ @Test void loginConPasswordIncorrectaEs401() { when(usuarios.findByNickname("ProGamer")).thenReturn(Optional.of(user)); assertThatThrownBy(() -> service.login(credentials())).isInstanceOfSatisfying(ArenaException.class,e -> assertThat(e.status()).isEqualTo(401)); }
+ @Test void loginConCuentaInexistenteEs401() { assertThatThrownBy(() -> service.login(credentials())).isInstanceOfSatisfying(ArenaException.class,e -> assertThat(e.status()).isEqualTo(401)); }
+ @Test void cuentaDesactivadaEs403() { login(); user.setActivo(false); assertThatThrownBy(() -> service.login(credentials())).isInstanceOfSatisfying(ArenaException.class,e -> assertThat(e.status()).isEqualTo(403)); }
+ @Test void perfilDesactivadoNoPuedeIngresar() { login(); when(perfiles.buscar(19L)).thenReturn(new PerfilClient.Perfil(19L,"INACTIVO")); assertThatThrownBy(() -> service.login(credentials())).isInstanceOfSatisfying(ArenaException.class,e -> assertThat(e.status()).isEqualTo(403)); }
+ @Test void puedeRetomarProvisionInterrumpida() { user.setPerfilId(null); user.setCuentaId("cuenta-estable"); when(roles.findByNombre("JUGADOR")).thenReturn(Optional.of(jugador)); login(); when(perfiles.crear(any())).thenReturn(new PerfilClient.Perfil(19L,"ACTIVO")); service.register(request); verify(perfiles).crear(argThat(p -> p.cuentaId().equals("cuenta-estable"))); }
+ void login() { when(usuarios.findByNickname("ProGamer")).thenReturn(Optional.of(user)); when(encoder.matches("clave1234","hash")).thenReturn(true); }
+ LoginRequest credentials() { var r=new LoginRequest(); r.setNickname("ProGamer"); r.setPassword("clave1234"); return r; }
 }

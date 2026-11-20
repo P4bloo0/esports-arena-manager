@@ -1,77 +1,46 @@
 package com.esports.authservice.services;
-
-import com.esports.authservice.dtos.AuthResponse;
-import com.esports.authservice.dtos.LoginRequest;
-import com.esports.authservice.dtos.RegisterRequest;
+import com.esports.authservice.dtos.*;
 import com.esports.authservice.exceptions.AuthException;
-import com.esports.authservice.models.Rol;
-import com.esports.authservice.models.Usuario;
-import com.esports.authservice.repositories.RolRepository;
-import com.esports.authservice.repositories.UsuarioRepository;
+import com.esports.authservice.models.*;
+import com.esports.authservice.repositories.*;
 import com.esports.authservice.security.JwtService;
+import com.esports.authservice.clients.PerfilClient;
+import com.esports.common.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-
 @Service
 public class AuthService {
-
-    private final UsuarioRepository usuarioRepository;
-    private final RolRepository rolRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-
-    public AuthService(UsuarioRepository usuarioRepository, RolRepository rolRepository,
-                        PasswordEncoder passwordEncoder, JwtService jwtService) {
-        this.usuarioRepository = usuarioRepository;
-        this.rolRepository = rolRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-    }
-
-    public AuthResponse register(RegisterRequest request) {
-        if (usuarioRepository.existsByNickname(request.getNickname())) {
-            throw new AuthException("El nickname ya esta registrado");
-        }
-
-        Set<Rol> roles = new HashSet<>();
-        if (request.getRoles() == null || request.getRoles().isEmpty()) {
-            roles.add(rolRepository.findByNombre("JUGADOR")
-                    .orElseThrow(() -> new AuthException("Rol JUGADOR no configurado")));
-        } else {
-            for (String nombreRol : request.getRoles()) {
-                Rol rol = rolRepository.findByNombre(nombreRol.toUpperCase())
-                        .orElseThrow(() -> new AuthException("El rol " + nombreRol + " no existe"));
-                roles.add(rol);
-            }
-        }
-
-        Usuario usuario = new Usuario();
-        usuario.setNickname(request.getNickname());
-        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
-        usuario.setRoles(roles);
-        usuarioRepository.save(usuario);
-
-        return construirRespuesta(usuario);
-    }
-
-    public AuthResponse login(LoginRequest request) {
-        Usuario usuario = usuarioRepository.findByNickname(request.getNickname())
-                .orElseThrow(() -> new AuthException("Credenciales invalidas"));
-
-        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
-            throw new AuthException("Credenciales invalidas");
-        }
-
-        return construirRespuesta(usuario);
-    }
-
-    private AuthResponse construirRespuesta(Usuario usuario) {
-        String token = jwtService.generarToken(usuario);
-        Set<String> nombresRoles = usuario.getRoles().stream().map(Rol::getNombre).collect(Collectors.toSet());
-        return new AuthResponse(token, "Bearer", usuario.getNickname(), nombresRoles);
-    }
+ private final UsuarioRepository usuarios; private final RolRepository roles; private final PasswordEncoder encoder; private final JwtService jwt; private final PerfilClient perfiles;
+ public AuthService(UsuarioRepository usuarios,RolRepository roles,PasswordEncoder encoder,JwtService jwt,PerfilClient perfiles) { this.usuarios=usuarios; this.roles=roles; this.encoder=encoder; this.jwt=jwt; this.perfiles=perfiles; }
+ public AuthResponse register(RegisterRequest request) {
+  if(request.getRoles()!=null && request.getRoles().stream().anyMatch(r -> !"JUGADOR".equalsIgnoreCase(r))) throw new AuthException("El registro publico solo permite el rol JUGADOR.");
+  return registerRole(request,"JUGADOR");
+ }
+ public AuthResponse registerRole(RegisterRequest request,String role) {
+  Rol rol=roles.findByNombre(role.toUpperCase()).orElseThrow(() -> new AuthException("Rol no configurado"));
+  Usuario user=usuarios.findByNickname(request.getNickname()).orElse(null);
+  if(user!=null && user.getRoles().stream().noneMatch(r -> r.getNombre().equals(role.toUpperCase()))) throw new AuthException("El registro pendiente tiene otro rol");
+  if(user!=null && (user.getPerfilId()!=null || !encoder.matches(request.getPassword(),user.getPassword()))) throw new AuthException("El nickname ya esta registrado");
+  if(user==null) {
+   user=new Usuario(); user.setCuentaId(UUID.randomUUID().toString()); user.setNickname(request.getNickname()); user.setPassword(encoder.encode(request.getPassword()));
+   user.setNombre(request.getNombre()); user.setEmail(request.getEmail()); user.setRoles(Set.of(rol)); user.setActivo(true); user=usuarios.save(user);
+  }
+  // Una interrupcion deja la cuenta pendiente; repetir el mismo registro retoma la provision idempotente.
+  var perfil=perfiles.crear(new PerfilClient.Provision(user.getCuentaId(),user.getNombre(),user.getNickname(),user.getEmail(),role));
+  user.setPerfilId(perfil.usuarioId()); usuarios.save(user); return response(user);
+ }
+ public AuthResponse login(LoginRequest request) {
+  var user=usuarios.findByNickname(request.getNickname()).orElseThrow(() -> new ArenaException(401,"Credenciales invalidas"));
+  if(!encoder.matches(request.getPassword(),user.getPassword())) throw new ArenaException(401,"Credenciales invalidas");
+  active(user); return response(user);
+ }
+ public AuthResponse renovar(String nickname) { var user=usuarios.findByNickname(nickname).orElseThrow(() -> new ArenaException(401,"Cuenta no encontrada")); active(user); return response(user); }
+ private void active(Usuario user) {
+  if(Boolean.FALSE.equals(user.getActivo())) throw new ArenaException(403,"La cuenta esta desactivada");
+  if(user.getPerfilId()==null) throw ArenaException.conflict("Completa el registro de la cuenta para ingresar.");
+  if(!"ACTIVO".equals(perfiles.buscar(user.getPerfilId()).estado())) throw new ArenaException(403,"La cuenta esta desactivada o sancionada");
+ }
+ private AuthResponse response(Usuario u) { return new AuthResponse(jwt.generarToken(u),"Bearer",u.getNickname(),u.getRoles().stream().map(Rol::getNombre).collect(Collectors.toSet()),u.getPerfilId()); }
 }

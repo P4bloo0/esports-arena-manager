@@ -20,6 +20,11 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "usuario_id")
     private Long usuarioId;
+    @Column(unique=true) private String cuentaId;
+    private Long perfilId;
+    private String nombre;
+    private String email;
+    private Boolean activo = true;
 
     @NotBlank
     @Column(unique = true, nullable = false)
