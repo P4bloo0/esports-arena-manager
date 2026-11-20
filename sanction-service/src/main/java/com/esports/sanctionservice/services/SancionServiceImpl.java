@@ -29,7 +29,7 @@ public class SancionServiceImpl implements SancionService {
     @Override
     public Sancion findById(Long id){
         return this.sancionRepository.findById(id)
-                .orElseThrow(() -> new SancionException("Sancion con la id " + id + " no encontrada"));
+                .orElseThrow(() -> new SancionException("Sancion con la id " + id + " no encontrada",404));
     }
 
     //devuelve todas las sanciones de un solo usuario
@@ -80,11 +80,12 @@ public class SancionServiceImpl implements SancionService {
             if(sancion.getEstado().equals("CERRADA")){
                 throw new SancionException("No se puede modificar una sancion cerrada");
             }
+            if(!dto.getFechaFin().isAfter(sancion.getFechaInicio())) throw new SancionException("El fin debe ser posterior al inicio");
             sancion.setMotivo(dto.getMotivo());
             sancion.setFechaFin(dto.getFechaFin());
             sancion.setSeveridad(dto.getSeveridad());
             return this.sancionRepository.save(sancion);
-        }).orElseThrow(()-> new SancionException("La sancion con id" + id + " no encontrada"));
+        }).orElseThrow(()-> new SancionException("La sancion con id" + id + " no encontrada",404));
     }
 
     //cierra una sancion cerrada
@@ -95,16 +96,17 @@ public class SancionServiceImpl implements SancionService {
             sancion.setEstado("CERRADA");
             return this.sancionRepository.save(sancion);
 
-        }).orElseThrow(() -> new SancionException("La sancion con la id " + id + " no encontrada"));
+        }).orElseThrow(() -> new SancionException("La sancion con la id " + id + " no encontrada",404));
     }
 
     //esto verificara si un usuario o equipo tiene una sancion activa
-    @Transactional(readOnly = true)
+    private boolean vigente(Sancion s) { var now=com.esports.common.ArenaTime.now(); return !now.isBefore(s.getFechaInicio()) && !now.isAfter(s.getFechaFin()); }
+    @Transactional(readOnly=true)
     @Override
     public boolean tieneSancionActiva(Long usuarioId, Long equipoId){
-        if(usuarioId != null && !this.sancionRepository.findByUsuarioIdAndEstado(usuarioId, "ACTIVA").isEmpty())
+        if(usuarioId != null && this.sancionRepository.findByUsuarioIdAndEstado(usuarioId, "ACTIVA").stream().anyMatch(this::vigente))
             return true;
-        if(equipoId != null && !this.sancionRepository.findByEquipoIdAndEstado(equipoId, "ACTIVA").isEmpty())
+        if(equipoId != null && this.sancionRepository.findByEquipoIdAndEstado(equipoId, "ACTIVA").stream().anyMatch(this::vigente))
             return true;
         return false;
     }
