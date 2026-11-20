@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface NotificacionRepository extends JpaRepository<Notificacion, Long> {
+    java.util.Optional<Notificacion> findByClave(String clave);
 
 
     List<Notificacion> findByUsuarioId(Long usuarioId);

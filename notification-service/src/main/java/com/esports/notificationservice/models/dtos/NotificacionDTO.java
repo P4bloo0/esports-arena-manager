@@ -13,6 +13,7 @@ import lombok.*;
 public class NotificacionDTO {
 
 
+    private String clave;
     private Long usuarioId;
     private Long equipoId;
 

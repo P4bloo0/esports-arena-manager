@@ -20,6 +20,7 @@ public class Notificacion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "notificacion_id")
     private Long notificacionId;
+    @Column(unique=true) private String clave;
 
 
     @Column(name = "usuario_id")
@@ -46,7 +47,7 @@ public class Notificacion {
 
 
     @Column(nullable = false)
-    private LocalDateTime fecha = LocalDateTime.now();
+    private LocalDateTime fecha = com.esports.common.ArenaTime.now();
 
 
     @Enumerated(EnumType.STRING)

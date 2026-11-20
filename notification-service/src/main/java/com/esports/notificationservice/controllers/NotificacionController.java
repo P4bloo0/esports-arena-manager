@@ -22,12 +22,14 @@ public class NotificacionController {
 
     // GET /api/v1/notificaciones
     @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ADMINISTRADOR','ORGANIZADOR')")
     public ResponseEntity<List<Notificacion>> findAll() {
         return ResponseEntity.status(HttpStatus.OK).body(this.notificacionService.findAll());
     }
 
     // GET /api/v1/notificaciones/1
     @GetMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("@notificacionAccess.read(#id)")
     public ResponseEntity<Notificacion> findById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(this.notificacionService.findById(id));
     }
@@ -35,11 +37,13 @@ public class NotificacionController {
     // GET /api/v1/notificaciones/usuario/1
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<Notificacion>> findByUsuario(@PathVariable Long usuarioId) {
+        com.esports.common.Actor.own(usuarioId);
         return ResponseEntity.status(HttpStatus.OK).body(this.notificacionService.findByUsuarioId(usuarioId));
     }
 
     // GET /api/v1/notificaciones/equipo/1
     @GetMapping("/equipo/{equipoId}")
+    @org.springframework.security.access.prepost.PreAuthorize("@notificacionAccess.team(#equipoId)")
     public ResponseEntity<List<Notificacion>> findByEquipo(@PathVariable Long equipoId) {
         return ResponseEntity.status(HttpStatus.OK).body(this.notificacionService.findByEquipoId(equipoId));
     }
@@ -47,6 +51,7 @@ public class NotificacionController {
     // GET /api/v1/notificaciones/usuario/1/no-leidas
     @GetMapping("/usuario/{usuarioId}/no-leidas")
     public ResponseEntity<List<Notificacion>> findNoLeidas(@PathVariable Long usuarioId) {
+        com.esports.common.Actor.own(usuarioId);
         return ResponseEntity.status(HttpStatus.OK).body(this.notificacionService.findNoLeidasByUsuarioId(usuarioId));
     }
 
@@ -58,12 +63,14 @@ public class NotificacionController {
 
     // PATCH /api/v1/notificaciones/1/leer
     @PatchMapping("/{id}/leer")
+    @org.springframework.security.access.prepost.PreAuthorize("@notificacionAccess.read(#id)")
     public ResponseEntity<Notificacion> marcarComoLeida(@PathVariable Long id) {
         return ResponseEntity.ok(this.notificacionService.marcarComoLeida(id));
     }
 
     // PATCH /api/v1/notificaciones/1/archivar
     @PatchMapping("/{id}/archivar")
+    @org.springframework.security.access.prepost.PreAuthorize("@notificacionAccess.read(#id)")
     public ResponseEntity<Notificacion> archivar(@PathVariable Long id) {
         return ResponseEntity.ok(this.notificacionService.archivar(id));
     }

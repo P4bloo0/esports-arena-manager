@@ -34,7 +34,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     public Notificacion findById(Long id) {
         log.info("Buscando notificacion con id {}", id);
         return this.notificacionRepository.findById(id)
-                .orElseThrow(() -> new NotificacionException("Notificacion con id '" + id + "' no encontrada"));
+                .orElseThrow(() -> new NotificacionException("Notificacion con id '" + id + "' no encontrada",404));
     }
 
 
@@ -73,13 +73,15 @@ public class NotificacionServiceImpl implements NotificacionService {
             throw new NotificacionException("La notificacion debe tener al menos un destinatario: usuarioId o equipoId");
         }
 
+        if(dto.getClave()!=null) { var existente=notificacionRepository.findByClave(dto.getClave()); if(existente.isPresent()) return existente.get(); }
         Notificacion notificacion = new Notificacion();
+        notificacion.setClave(dto.getClave());
         notificacion.setUsuarioId(dto.getUsuarioId());
         notificacion.setEquipoId(dto.getEquipoId());
         notificacion.setTipo(dto.getTipo());
         notificacion.setMensaje(dto.getMensaje());
         notificacion.setLeida(false);
-        notificacion.setFecha(LocalDateTime.now());
+        notificacion.setFecha(com.esports.common.ArenaTime.now());
         notificacion.setEstado(Notificacion.Estado.ACTIVA);
 
         Notificacion guardada = this.notificacionRepository.save(notificacion);
@@ -100,7 +102,7 @@ public class NotificacionServiceImpl implements NotificacionService {
 
             notificacion.setLeida(true);
             return this.notificacionRepository.save(notificacion);
-        }).orElseThrow(() -> new NotificacionException("Notificacion con id '" + id + "' no encontrada"));
+        }).orElseThrow(() -> new NotificacionException("Notificacion con id '" + id + "' no encontrada",404));
     }
 
 
@@ -116,6 +118,6 @@ public class NotificacionServiceImpl implements NotificacionService {
 
             notificacion.setEstado(Notificacion.Estado.ARCHIVADA);
             return this.notificacionRepository.save(notificacion);
-        }).orElseThrow(() -> new NotificacionException("Notificacion con id '" + id + "' no encontrada"));
+        }).orElseThrow(() -> new NotificacionException("Notificacion con id '" + id + "' no encontrada",404));
     }
 }
