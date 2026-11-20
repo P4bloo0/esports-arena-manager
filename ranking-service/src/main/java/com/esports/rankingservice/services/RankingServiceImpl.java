@@ -31,6 +31,8 @@ public class RankingServiceImpl implements RankingService {
 
     @Autowired
     private PartidaClient partidaClient;
+    @Autowired private com.esports.rankingservice.clients.InscripcionesClient inscripciones;
+    @Autowired private RankingControlService control;
 
 
     @Transactional(readOnly = true)
@@ -46,7 +48,7 @@ public class RankingServiceImpl implements RankingService {
     public Ranking findById(Long id) {
         log.info("Buscando ranking con id {}", id);
         return this.rankingRepository.findById(id)
-                .orElseThrow(() -> new RankingException("Ranking con id '" + id + "' no encontrado"));
+                .orElseThrow(() -> new RankingException("Ranking con id '" + id + "' no encontrado",404));
     }
 
 
@@ -116,79 +118,48 @@ public class RankingServiceImpl implements RankingService {
             recalcularPosiciones(ranking.getTorneoId());
 
             return actualizado;
-        }).orElseThrow(() -> new RankingException("Ranking con id '" + id + "' no encontrado"));
+        }).orElseThrow(() -> new RankingException("Ranking con id '" + id + "' no encontrado",404));
     }
 
 
     @Transactional
     @Override
     public List<Ranking> recalcularDesdeResultados(Long torneoId) {
-        log.info("Recalculando ranking del torneo {} desde resultados validados", torneoId);
-
-
+        try { control.ensure(torneoId); } catch(org.springframework.dao.DataIntegrityViolationException ignored) {}
+        control.lock(torneoId);
+        var existentes=rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(torneoId);
+        if(existentes.stream().anyMatch(r -> r.getEstado()==Ranking.Estado.CERRADO)) throw new RankingException("El ranking esta cerrado");
+        java.util.Map<Long,Ranking> tabla=new java.util.LinkedHashMap<>();
+        for(var r:existentes) { r.setPuntos(0); r.setVictorias(0); r.setDerrotas(0); r.setDiferencia(0); tabla.put(r.getParticipanteId(),r); }
+        for(var i:inscripciones.listar(torneoId)) if("CONFIRMADA".equals(i.estado())) participante(tabla,torneoId,i.equipoId()!=null?i.equipoId():i.jugadorId());
         List<ResultadoDTO> resultados;
-        try {
-            resultados = this.resultadoClient.getResultadosByTorneo(torneoId);
-        } catch (FeignException e) {
-            log.error("Error al obtener resultados del torneo {}", torneoId);
-            throw new RankingException("No se pudo obtener los resultados del torneo con id '" + torneoId + "'");
+        try { resultados=resultadoClient.getResultadosByTorneo(torneoId); } catch(FeignException ex) { throw new RankingException("No se pudieron consultar los resultados"); }
+        for(var resultado:resultados) {
+            if(!"VALIDADO".equals(resultado.getEstadoValidacion())) continue;
+            var partida=partidaClient.getPartidaById(resultado.getPartidaId());
+            var a=participante(tabla,torneoId,partida.getParticipanteAId());
+            var b=participante(tabla,torneoId,partida.getParticipanteBId());
+            if(!resultado.getGanadorId().equals(a.getParticipanteId()) && !resultado.getGanadorId().equals(b.getParticipanteId())) throw new RankingException("El ganador no pertenece a la partida");
+            int diferencia=resultado.getPuntajeA()-resultado.getPuntajeB();
+            a.setDiferencia(a.getDiferencia()+diferencia); b.setDiferencia(b.getDiferencia()-diferencia);
+            var ganador=resultado.getGanadorId().equals(a.getParticipanteId())?a:b;
+            var perdedor=ganador==a?b:a;
+            ganador.setPuntos(ganador.getPuntos()+3); ganador.setVictorias(ganador.getVictorias()+1); perdedor.setDerrotas(perdedor.getDerrotas()+1);
         }
-
-
-        List<ResultadoDTO> validados = resultados.stream()
-                .filter(r -> "VALIDADO".equals(r.getEstadoValidacion()))
-                .toList();
-
-        log.info("Se encontraron {} resultados validados para el torneo {}", validados.size(), torneoId);
-
-
-        for (ResultadoDTO resultado : validados) {
-            PartidaDTO partida;
-            try {
-                partida = this.partidaClient.getPartidaById(resultado.getPartidaId());
-            } catch (FeignException e) {
-                log.warn("No se pudo obtener la partida {} al recalcular ranking", resultado.getPartidaId());
-                continue;
-            }
-
-            Long ganadorId = resultado.getGanadorId();
-            Long perdedorId = partida.getParticipanteAId().equals(ganadorId)
-                    ? partida.getParticipanteBId()
-                    : partida.getParticipanteAId();
-
-            int difGanador = resultado.getPuntajeA() - resultado.getPuntajeB();
-            int difPerdedor = resultado.getPuntajeB() - resultado.getPuntajeA();
-
-
-            this.rankingRepository.findByTorneoIdAndParticipanteId(torneoId, ganadorId).ifPresent(r -> {
-                r.setPuntos(r.getPuntos() + 3);
-                r.setVictorias(r.getVictorias() + 1);
-                r.setDiferencia(r.getDiferencia() + difGanador);
-                this.rankingRepository.save(r);
-            });
-
-
-            this.rankingRepository.findByTorneoIdAndParticipanteId(torneoId, perdedorId).ifPresent(r -> {
-                r.setDerrotas(r.getDerrotas() + 1);
-                r.setDiferencia(r.getDiferencia() + difPerdedor);
-                this.rankingRepository.save(r);
-            });
-        }
-
-
-        recalcularPosiciones(torneoId);
-
-        log.info("Recalculo de ranking completado para torneo {}", torneoId);
-        return this.rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(torneoId);
+        var lista=tabla.values().stream().sorted(java.util.Comparator.comparing(Ranking::getPuntos).reversed().thenComparing(java.util.Comparator.comparing(Ranking::getDiferencia).reversed()).thenComparing(Ranking::getParticipanteId)).toList();
+        int posicion=1; for(var r:lista) { r.setPosicion(posicion++); rankingRepository.save(r); }
+        return lista;
     }
-
+    private Ranking participante(java.util.Map<Long,Ranking> tabla,Long torneo,Long id) {
+        return tabla.computeIfAbsent(id,k -> { var r=new Ranking(); r.setTorneoId(torneo); r.setParticipanteId(k); r.setPuntos(0); r.setVictorias(0); r.setDerrotas(0); r.setDiferencia(0); r.setPosicion(0); r.setEstado(Ranking.Estado.ACTIVO); return r; });
+    }
 
     @Transactional
     @Override
     public List<Ranking> cerrarRanking(Long torneoId) {
         log.info("Cerrando ranking del torneo con id {}", torneoId);
 
-        List<Ranking> rankings = this.rankingRepository.findByTorneoIdOrderByPuntosDesc(torneoId);
+        List<Ranking> rankings = this.rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(torneoId);
 
         if (rankings.isEmpty()) {
             throw new RankingException("No existe ranking para el torneo con id '" + torneoId + "'");
@@ -202,7 +173,7 @@ public class RankingServiceImpl implements RankingService {
 
 
     private void recalcularPosiciones(Long torneoId) {
-        List<Ranking> rankings = this.rankingRepository.findByTorneoIdOrderByPuntosDesc(torneoId);
+        List<Ranking> rankings = this.rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(torneoId);
         AtomicInteger posicion = new AtomicInteger(1);
         rankings.forEach(r -> {
             r.setPosicion(posicion.getAndIncrement());

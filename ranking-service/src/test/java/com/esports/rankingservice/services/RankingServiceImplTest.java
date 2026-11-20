@@ -36,6 +36,8 @@ public class RankingServiceImplTest {
 
     @Mock
     private PartidaClient partidaClient;
+    @Mock private RankingControlService control;
+    @Mock private com.esports.rankingservice.clients.InscripcionesClient inscripciones;
 
     @InjectMocks
     private RankingServiceImpl rankingService;
@@ -127,7 +129,7 @@ public class RankingServiceImplTest {
 
         when(rankingRepository.findById(1L)).thenReturn(Optional.of(rankingPrueba));
         when(rankingRepository.save(any(Ranking.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(rankingRepository.findByTorneoIdOrderByPuntosDesc(100L)).thenReturn(List.of(rankingPrueba));
+        when(rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(100L)).thenReturn(List.of(rankingPrueba));
 
         Ranking result = rankingService.actualizarPuntos(1L, puntosDTO);
 
@@ -154,32 +156,16 @@ public class RankingServiceImplTest {
     }
 
     @Test
-    @DisplayName("Debe recalcular el ranking desde resultados validados")
+    @DisplayName("Recalcular no duplica puntos, respeta ganador B y elimina resultados anulados")
     public void shouldRecalcularDesdeResultados() {
-        ResultadoDTO resultadoValidado = new ResultadoDTO();
-        resultadoValidado.setPartidaId(200L);
-        resultadoValidado.setGanadorId(10L);
-        resultadoValidado.setPuntajeA(3);
-        resultadoValidado.setPuntajeB(1);
-        resultadoValidado.setEstadoValidacion("VALIDADO");
-
-        PartidaDTO partida = new PartidaDTO();
-        partida.setPartidaId(200L);
-        partida.setParticipanteAId(10L);
-        partida.setParticipanteBId(20L);
-
-        when(resultadoClient.getResultadosByTorneo(100L)).thenReturn(List.of(resultadoValidado));
-        when(partidaClient.getPartidaById(200L)).thenReturn(partida);
-        when(rankingRepository.findByTorneoIdAndParticipanteId(100L, 10L)).thenReturn(Optional.of(rankingPrueba));
-        when(rankingRepository.findByTorneoIdAndParticipanteId(100L, 20L)).thenReturn(Optional.empty());
-        when(rankingRepository.save(any(Ranking.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(rankingRepository.findByTorneoIdOrderByPuntosDesc(100L)).thenReturn(List.of(rankingPrueba));
-        when(rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(100L)).thenReturn(List.of(rankingPrueba));
-
-        List<Ranking> result = rankingService.recalcularDesdeResultados(100L);
-
-        assertThat(result).hasSize(1);
-        verify(resultadoClient, times(1)).getResultadosByTorneo(100L);
+        var b=new Ranking(); b.setTorneoId(100L); b.setParticipanteId(20L); b.setPuntos(0); b.setVictorias(0); b.setDerrotas(0); b.setDiferencia(0); b.setEstado(Ranking.Estado.ACTIVO);
+        var resultado=new ResultadoDTO(); resultado.setPartidaId(200L); resultado.setGanadorId(20L); resultado.setPuntajeA(1); resultado.setPuntajeB(3); resultado.setEstadoValidacion("VALIDADO");
+        var partida=new PartidaDTO(); partida.setPartidaId(200L); partida.setParticipanteAId(10L); partida.setParticipanteBId(20L);
+        when(rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(100L)).thenReturn(List.of(rankingPrueba,b));
+        when(resultadoClient.getResultadosByTorneo(100L)).thenReturn(List.of(resultado)); when(partidaClient.getPartidaById(200L)).thenReturn(partida);
+        rankingService.recalcularDesdeResultados(100L); var segunda=rankingService.recalcularDesdeResultados(100L);
+        assertThat(segunda.getFirst().getParticipanteId()).isEqualTo(20L); assertThat(b.getPuntos()).isEqualTo(3); assertThat(b.getVictorias()).isEqualTo(1); assertThat(b.getDiferencia()).isEqualTo(2); assertThat(rankingPrueba.getDiferencia()).isEqualTo(-2);
+        when(resultadoClient.getResultadosByTorneo(100L)).thenReturn(List.of()); rankingService.recalcularDesdeResultados(100L); assertThat(b.getPuntos()).isZero(); assertThat(b.getDiferencia()).isZero();
     }
 
     @Test
@@ -194,7 +180,7 @@ public class RankingServiceImplTest {
     @Test
     @DisplayName("Debe cerrar el ranking de un torneo con registros")
     public void shouldCerrarRanking() {
-        when(rankingRepository.findByTorneoIdOrderByPuntosDesc(100L)).thenReturn(List.of(rankingPrueba));
+        when(rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(100L)).thenReturn(List.of(rankingPrueba));
         when(rankingRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
         List<Ranking> result = rankingService.cerrarRanking(100L);
@@ -206,7 +192,7 @@ public class RankingServiceImplTest {
     @Test
     @DisplayName("Debe lanzar excepcion al cerrar ranking de un torneo sin registros")
     public void shouldNotCerrarRankingWhenVacio() {
-        when(rankingRepository.findByTorneoIdOrderByPuntosDesc(100L)).thenReturn(List.of());
+        when(rankingRepository.findByTorneoIdOrderByPuntosDescDiferenciaDesc(100L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> rankingService.cerrarRanking(100L))
                 .isInstanceOf(RankingException.class);
