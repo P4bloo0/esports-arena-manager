@@ -45,7 +45,7 @@ public class PartidaServiceImpl implements PartidaService {
     public Partida findById(Long id) {
         log.info("Buscando partida con id {}", id);
         return this.partidaRepository.findById(id)
-                .orElseThrow(() -> new PartidaException("Partida con id '" + id + "' no encontrada"));
+                .orElseThrow(() -> new PartidaException("Partida con id '" + id + "' no encontrada",404));
     }
 
     // lista todas las partidas de un torneo
@@ -108,12 +108,12 @@ public class PartidaServiceImpl implements PartidaService {
         }
 
         boolean aInscrito = inscripciones.stream().anyMatch(i ->
-                (i.getEquipoId() != null && i.getEquipoId().equals(dto.getParticipanteAId())) ||
-                (i.getJugadorId() != null && i.getJugadorId().equals(dto.getParticipanteAId())));
+                "CONFIRMADA".equals(i.getEstado()) && ((i.getEquipoId() != null && i.getEquipoId().equals(dto.getParticipanteAId())) ||
+                (i.getJugadorId() != null && i.getJugadorId().equals(dto.getParticipanteAId()))));
 
         boolean bInscrito = inscripciones.stream().anyMatch(i ->
-                (i.getEquipoId() != null && i.getEquipoId().equals(dto.getParticipanteBId())) ||
-                (i.getJugadorId() != null && i.getJugadorId().equals(dto.getParticipanteBId())));
+                "CONFIRMADA".equals(i.getEstado()) && ((i.getEquipoId() != null && i.getEquipoId().equals(dto.getParticipanteBId())) ||
+                (i.getJugadorId() != null && i.getJugadorId().equals(dto.getParticipanteBId()))));
 
         if (!aInscrito) {
             log.warn("Participante A con id {} no esta inscrito en el torneo {}", dto.getParticipanteAId(), dto.getTorneoId());
@@ -160,10 +160,9 @@ public class PartidaServiceImpl implements PartidaService {
 
             partida.setRonda(dto.getRonda());
             partida.setFechaHora(dto.getFechaHora());
-            partida.setParticipanteAId(dto.getParticipanteAId());
-            partida.setParticipanteBId(dto.getParticipanteBId());
+            if(!partida.getParticipanteAId().equals(dto.getParticipanteAId()) || !partida.getParticipanteBId().equals(dto.getParticipanteBId())) throw new PartidaException("Para cambiar participantes cancela la partida y crea otra validada");
             return this.partidaRepository.save(partida);
-        }).orElseThrow(() -> new PartidaException("Partida con id '" + id + "' no encontrada"));
+        }).orElseThrow(() -> new PartidaException("Partida con id '" + id + "' no encontrada",404));
     }
 
     // cancela una partida
@@ -184,6 +183,6 @@ public class PartidaServiceImpl implements PartidaService {
 
             partida.setEstado(Partida.Estado.CANCELADA);
             return this.partidaRepository.save(partida);
-        }).orElseThrow(() -> new PartidaException("Partida con id '" + id + "' no encontrada"));
+        }).orElseThrow(() -> new PartidaException("Partida con id '" + id + "' no encontrada",404));
     }
 }

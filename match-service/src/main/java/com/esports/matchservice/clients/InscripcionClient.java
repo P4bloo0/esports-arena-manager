@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 
 
-@FeignClient(name = "registration-service", url = "localhost:8005/api/v1/inscripciones")
+@FeignClient(name = "registration-service", path = "/api/v1/inscripciones")
 public interface InscripcionClient {
 
     @GetMapping("/torneo/{torneoId}")

@@ -70,8 +70,10 @@ public class PartidaServiceImplTest {
 
         InscripcionDTO inscA = new InscripcionDTO();
         inscA.setEquipoId(10L);
+        inscA.setEstado("CONFIRMADA");
         InscripcionDTO inscB = new InscripcionDTO();
         inscB.setEquipoId(20L);
+        inscB.setEstado("CONFIRMADA");
         inscripcionesMock = List.of(inscA, inscB);
     }
 
