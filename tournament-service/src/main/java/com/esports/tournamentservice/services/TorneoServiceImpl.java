@@ -20,6 +20,7 @@ public class TorneoServiceImpl implements TorneoService{
 
     @Autowired
     private JuegoClient juegoClient;
+    @Autowired private CierreTorneo cierre;
 
     @Transactional(readOnly = true)
     @Override//esto retorna todos los torneos que hayan
@@ -31,7 +32,7 @@ public class TorneoServiceImpl implements TorneoService{
     @Override//esto busca torneos por su id y tiene una excepcion cuando no existan
     public Torneo findById(Long id){
         return this.torneoRepository.findById(id)
-                .orElseThrow(()-> new TorneoException("Torneo con id '" + id + "' no encontrado"));
+                .orElseThrow(()-> new TorneoException("Torneo con id '" + id + "' no encontrado",404));
     }
 
     @Transactional(readOnly = true)
@@ -84,10 +85,12 @@ public class TorneoServiceImpl implements TorneoService{
         return this.torneoRepository.findById(id).map(torneo -> {
 
             //este metodo hara que no se pueda modificar un torneo en curs
-            if(torneo.getEstado().equals("EN_CURSO")){
-              throw new TorneoException(("No se puede modificar un torneo en curso"));
+            if(java.util.Set.of("EN_CURSO","FINALIZADO").contains(torneo.getEstado())){
+              throw new TorneoException("No se puede modificar un torneo EN_CURSO o FINALIZADO");
             }
 
+            if(!dto.getFechaInicio().isAfter(dto.getFechaCierreInscripcion()) || !dto.getFechaFin().isAfter(dto.getFechaInicio())) throw new TorneoException("Revisa el orden de las fechas");
+            if(!java.util.Objects.equals(torneo.getJuegoId(),dto.getJuegoId())) throw new TorneoException("El juego del torneo no puede cambiarse");
             torneo.setNombre(dto.getNombre());
             torneo.setFechaInicio(dto.getFechaInicio());
             torneo.setFechaFin(dto.getFechaFin());
@@ -95,22 +98,25 @@ public class TorneoServiceImpl implements TorneoService{
             torneo.setCupoMaximo(dto.getCupoMaximo());
             torneo.setModalidad(dto.getModalidad());
             return this.torneoRepository.save(torneo);
-        }).orElseThrow(()->new TorneoException("Torneo con id '" + id + "' no encotrado"));
+        }).orElseThrow(()->new TorneoException("Torneo con id '" + id + "' no encotrado",404));
     }
 
     //este metodo va a cambiar el estado de un torneo
     @Transactional
     @Override
     public Torneo cambiarEstado(Long id, String nuevoEstado){
+        if("FINALIZADO".equals(nuevoEstado)) return cierre.finalizar(id);
         return this.torneoRepository.findById(id).map(torneo -> {
+            if(!(torneo.getEstado().equals("BORRADOR") && nuevoEstado.equals("ABIERTO") || torneo.getEstado().equals("ABIERTO") && nuevoEstado.equals("EN_CURSO"))) throw new TorneoException("Transicion de torneo no permitida");
             torneo.setEstado(nuevoEstado);
             return this.torneoRepository.save(torneo);
-        }).orElseThrow(()->new TorneoException("Torneo con id '" + id + "' no encontrado"));
+        }).orElseThrow(()->new TorneoException("Torneo con id '" + id + "' no encontrado",404));
     }
 
     @Transactional
     @Override// esto es para borrar un torneo por su id
     public void deleteById(Long id){
+        var t=findById(id); if(!"BORRADOR".equals(t.getEstado())) throw new TorneoException("Solo se pueden eliminar borradores");
         this.torneoRepository.deleteById(id);
     }
 

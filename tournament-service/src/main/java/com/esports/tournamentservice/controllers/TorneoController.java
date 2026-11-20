@@ -26,12 +26,13 @@ public class TorneoController {
 
     @Autowired
     private TorneoService torneoService;
+    @Autowired private com.esports.tournamentservice.services.TorneoView vista;
 
     @GetMapping
     @Operation(summary = "Listado de todos los torneos", description = "Se devuelve una lista con todos los torneos registrados")
     @ApiResponse(responseCode = "200", description = "Operacion Exitosa")
     public ResponseEntity<List<Torneo>> findAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(this.torneoService.findAll());
+        return ResponseEntity.status(HttpStatus.OK).body(vista.completar(this.torneoService.findAll()));
     }
 
     @GetMapping("/{id}")
@@ -45,7 +46,7 @@ public class TorneoController {
     public ResponseEntity<Torneo> findById(
             @Parameter(description = "Id del torneo a buscar", required = true, example = "1")
             @PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.OK).body(this.torneoService.findById(id));
+        return ResponseEntity.status(HttpStatus.OK).body(vista.completar(this.torneoService.findById(id)));
     }
 
     @GetMapping("/estado/{estado}")
@@ -54,7 +55,7 @@ public class TorneoController {
     public ResponseEntity<List<Torneo>> findByEstado(
             @Parameter(description = "Estado del torneo", required = true, example = "ABIERTO")
             @PathVariable String estado) {
-        return ResponseEntity.status(HttpStatus.OK).body(this.torneoService.findByEstado(estado));
+        return ResponseEntity.status(HttpStatus.OK).body(vista.completar(this.torneoService.findByEstado(estado)));
     }
 
     @GetMapping("/juego/{juegoId}")
@@ -63,7 +64,7 @@ public class TorneoController {
     public ResponseEntity<List<Torneo>> findByJuego(
             @Parameter(description = "Id del juego", required = true, example = "1")
             @PathVariable Long juegoId) {
-        return ResponseEntity.status(HttpStatus.OK).body(this.torneoService.findByJuegoId(juegoId));
+        return ResponseEntity.status(HttpStatus.OK).body(vista.completar(this.torneoService.findByJuegoId(juegoId)));
     }
 
     @PostMapping
