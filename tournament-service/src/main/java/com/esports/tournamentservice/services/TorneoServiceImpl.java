@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class TorneoServiceImpl implements TorneoService{
@@ -82,7 +83,7 @@ public class TorneoServiceImpl implements TorneoService{
     @Transactional
     @Override
     public Torneo update(Long id, TorneoDTO dto){
-        return this.torneoRepository.findById(id).map(torneo -> {
+        return this.torneoRepository.lock(id).map(torneo -> {
 
             //este metodo hara que no se pueda modificar un torneo en curs
             if(java.util.Set.of("EN_CURSO","FINALIZADO").contains(torneo.getEstado())){
@@ -90,7 +91,10 @@ public class TorneoServiceImpl implements TorneoService{
             }
 
             if(!dto.getFechaInicio().isAfter(dto.getFechaCierreInscripcion()) || !dto.getFechaFin().isAfter(dto.getFechaInicio())) throw new TorneoException("Revisa el orden de las fechas");
-            if(!java.util.Objects.equals(torneo.getJuegoId(),dto.getJuegoId())) throw new TorneoException("El juego del torneo no puede cambiarse");
+            if(!Objects.equals(torneo.getJuegoId(),dto.getJuegoId())) throw new TorneoException("El juego del torneo no puede cambiarse");
+            if (!"BORRADOR".equals(torneo.getEstado()) && !Objects.equals(torneo.getModalidad(), dto.getModalidad())) {
+                throw new TorneoException("La modalidad queda fija al abrir las inscripciones.", 409);
+            }
             torneo.setNombre(dto.getNombre());
             torneo.setFechaInicio(dto.getFechaInicio());
             torneo.setFechaFin(dto.getFechaFin());
@@ -106,7 +110,7 @@ public class TorneoServiceImpl implements TorneoService{
     @Override
     public Torneo cambiarEstado(Long id, String nuevoEstado){
         if("FINALIZADO".equals(nuevoEstado)) return cierre.finalizar(id);
-        return this.torneoRepository.findById(id).map(torneo -> {
+        return this.torneoRepository.lock(id).map(torneo -> {
             if(!(torneo.getEstado().equals("BORRADOR") && nuevoEstado.equals("ABIERTO") || torneo.getEstado().equals("ABIERTO") && nuevoEstado.equals("EN_CURSO"))) throw new TorneoException("Transicion de torneo no permitida");
             torneo.setEstado(nuevoEstado);
             return this.torneoRepository.save(torneo);

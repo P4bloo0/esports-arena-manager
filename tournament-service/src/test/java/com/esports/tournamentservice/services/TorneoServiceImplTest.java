@@ -129,7 +129,7 @@ public class TorneoServiceImplTest {
     @DisplayName("Debe lanzar excepcion al modificar torneo EN_CURSO")
     public void shouldThrowWhenModifyTorneoEnCurso() {
         torneoPrueba.setEstado("EN_CURSO");
-        when(torneoRepository.findById(1L)).thenReturn(Optional.of(torneoPrueba));
+        when(torneoRepository.lock(1L)).thenReturn(Optional.of(torneoPrueba));
 
         assertThatThrownBy(() -> torneoService.update(1L, torneoDTO))
                 .isInstanceOf(TorneoException.class)
@@ -139,9 +139,29 @@ public class TorneoServiceImplTest {
     }
 
     @Test
+    @DisplayName("Debe conservar la modalidad al editar un torneo abierto")
+    public void shouldKeepModalidadWhenTorneoIsOpen() {
+        torneoPrueba.setEstado("ABIERTO");
+        when(torneoRepository.lock(1L)).thenReturn(Optional.of(torneoPrueba));
+        torneoDTO.setModalidad("Individual");
+
+        assertThatThrownBy(() -> torneoService.update(1L, torneoDTO))
+                .isInstanceOfSatisfying(TorneoException.class, error -> assertThat(error.status()).isEqualTo(409));
+        verify(torneoRepository, never()).save(any(Torneo.class));
+
+        torneoDTO.setModalidad(torneoPrueba.getModalidad());
+        torneoDTO.setNombre("Torneo con nuevo nombre");
+        when(torneoRepository.save(torneoPrueba)).thenReturn(torneoPrueba);
+
+        Torneo editado = torneoService.update(1L, torneoDTO);
+        assertThat(editado.getNombre()).isEqualTo("Torneo con nuevo nombre");
+        assertThat(editado.getModalidad()).isEqualTo("eliminacion_directa");
+    }
+
+    @Test
     @DisplayName("Debe cambiar el estado de un torneo")
     public void shouldCambiarEstadoTorneo() {
-        when(torneoRepository.findById(1L)).thenReturn(Optional.of(torneoPrueba));
+        when(torneoRepository.lock(1L)).thenReturn(Optional.of(torneoPrueba));
         when(torneoRepository.save(any(Torneo.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Torneo result = torneoService.cambiarEstado(1L, "ABIERTO");
