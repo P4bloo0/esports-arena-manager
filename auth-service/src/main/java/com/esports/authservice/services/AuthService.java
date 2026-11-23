@@ -27,9 +27,15 @@ public class AuthService {
    user=new Usuario(); user.setCuentaId(UUID.randomUUID().toString()); user.setNickname(request.getNickname()); user.setPassword(encoder.encode(request.getPassword()));
    user.setNombre(request.getNombre()); user.setEmail(request.getEmail()); user.setRoles(Set.of(rol)); user.setActivo(true); user=usuarios.save(user);
   }
-  // Una interrupcion deja la cuenta pendiente; repetir el mismo registro retoma la provision idempotente.
-  var perfil=perfiles.crear(new PerfilClient.Provision(user.getCuentaId(),user.getNombre(),user.getNickname(),user.getEmail(),role));
-  user.setPerfilId(perfil.usuarioId()); usuarios.save(user); return response(user);
+  // Una cuenta pendiente puede retomar el alta con datos corregidos y el mismo identificador.
+  var perfil = perfiles.crear(new PerfilClient.Provision(
+      user.getCuentaId(), request.getNombre(), user.getNickname(), request.getEmail(), role));
+  // Si el perfil ya existía, se conservan los datos que confirmó user-service.
+  user.setPerfilId(perfil.usuarioId());
+  user.setNombre(perfil.nombre());
+  user.setEmail(perfil.email());
+  usuarios.save(user);
+  return response(user);
  }
  public AuthResponse login(LoginRequest request) {
   var user=usuarios.findByNickname(request.getNickname()).orElseThrow(() -> new ArenaException(401,"Credenciales invalidas"));
