@@ -203,7 +203,7 @@ public class ResultadoServiceImplTest {
 
         when(partidaClient.getPartidaById(200L))
                 .thenReturn(partidaEnCurso);
-        when(resultadoRepository.findById(1L))
+        when(resultadoRepository.lock(1L))
                 .thenReturn(Optional.of(resultadoPrueba));
         when(resultadoRepository.save(any(Resultado.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -215,12 +215,40 @@ public class ResultadoServiceImplTest {
     }
 
     @Test
+    @DisplayName("Debe recuperar un resultado anulado y permitir validarlo de nuevo")
+    public void shouldReplaceAndValidateResultadoAnulado() {
+        resultadoPrueba.setEstadoValidacion(Resultado.EstadoValidacion.ANULADO);
+        resultadoPrueba.setJustificacionAnulacion("Marcador incorrecto");
+        partidaEnCurso.setEstado("FINALIZADA");
+        resultadoDTO.setGanadorId(20L);
+        resultadoDTO.setPuntajeA(1);
+        resultadoDTO.setPuntajeB(3);
+
+        when(resultadoRepository.lock(1L)).thenReturn(Optional.of(resultadoPrueba));
+        when(partidaClient.getPartidaById(200L)).thenReturn(partidaEnCurso);
+        when(resultadoRepository.save(any(Resultado.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Resultado corregido = resultadoService.update(1L, resultadoDTO);
+
+        assertThat(corregido.getResultadoId()).isEqualTo(1L);
+        assertThat(corregido.getGanadorId()).isEqualTo(20L);
+        assertThat(corregido.getPuntajeB()).isEqualTo(3);
+        assertThat(corregido.getJustificacionAnulacion()).isNull();
+        assertThat(corregido.getEstadoValidacion()).isEqualTo(Resultado.EstadoValidacion.PENDIENTE);
+        verifyNoInteractions(rankingSync);
+
+        assertThat(resultadoService.validar(1L).getEstadoValidacion())
+                .isEqualTo(Resultado.EstadoValidacion.VALIDADO);
+        verify(rankingSync).enqueue(200L);
+    }
+
+    @Test
     @DisplayName("Debe rechazar la actualizacion de un resultado validado")
     public void shouldNotUpdateWhenValidado() {
         resultadoPrueba.setEstadoValidacion(
                 Resultado.EstadoValidacion.VALIDADO);
 
-        when(resultadoRepository.findById(1L))
+        when(resultadoRepository.lock(1L))
                 .thenReturn(Optional.of(resultadoPrueba));
 
         assertThatThrownBy(
@@ -235,7 +263,7 @@ public class ResultadoServiceImplTest {
     public void shouldValidarResultado() {
         when(partidaClient.getPartidaById(200L))
                 .thenReturn(partidaEnCurso);
-        when(resultadoRepository.findById(1L))
+        when(resultadoRepository.lock(1L))
                 .thenReturn(Optional.of(resultadoPrueba));
         when(resultadoRepository.save(any(Resultado.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -254,7 +282,7 @@ public class ResultadoServiceImplTest {
         resultadoPrueba.setEstadoValidacion(
                 Resultado.EstadoValidacion.ANULADO);
 
-        when(resultadoRepository.findById(1L))
+        when(resultadoRepository.lock(1L))
                 .thenReturn(Optional.of(resultadoPrueba));
 
         assertThatThrownBy(() -> resultadoService.validar(1L))
@@ -271,7 +299,7 @@ public class ResultadoServiceImplTest {
 
         partidaEnCurso.setEstado(estado);
 
-        when(resultadoRepository.findById(1L))
+        when(resultadoRepository.lock(1L))
                 .thenReturn(Optional.of(resultadoPrueba));
         when(partidaClient.getPartidaById(200L))
                 .thenReturn(partidaEnCurso);
@@ -300,7 +328,7 @@ public class ResultadoServiceImplTest {
         AnulacionDTO anulacion = new AnulacionDTO();
         anulacion.setJustificacion("Error de arbitraje");
 
-        when(resultadoRepository.findById(1L))
+        when(resultadoRepository.lock(1L))
                 .thenReturn(Optional.of(resultadoPrueba));
         when(resultadoRepository.save(any(Resultado.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -324,7 +352,7 @@ public class ResultadoServiceImplTest {
         AnulacionDTO anulacion = new AnulacionDTO();
         anulacion.setJustificacion("Intento repetido");
 
-        when(resultadoRepository.findById(1L))
+        when(resultadoRepository.lock(1L))
                 .thenReturn(Optional.of(resultadoPrueba));
 
         assertThatThrownBy(

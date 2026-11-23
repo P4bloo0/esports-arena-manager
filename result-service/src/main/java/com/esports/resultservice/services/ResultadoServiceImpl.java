@@ -125,20 +125,16 @@ public class ResultadoServiceImpl implements ResultadoService {
         return guardado;
     }
 
-    // actualiza un resultado solo si aun no ha sido validado
+    // Corrige un resultado pendiente o reemplaza uno anulado.
     @Transactional
     @Override
     public Resultado update(Long id, ResultadoDTO dto) {
         log.info("Actualizando resultado con id {}", id);
-        return this.resultadoRepository.findById(id).map(resultado -> {
+        return this.resultadoRepository.lock(id).map(resultado -> {
 
             // resultado validado no puede modificarse
             if (resultado.getEstadoValidacion() == Resultado.EstadoValidacion.VALIDADO) {
                 throw new ResultadoException("No se puede modificar un resultado ya validado");
-            }
-
-            if (resultado.getEstadoValidacion() == Resultado.EstadoValidacion.ANULADO) {
-                throw new ResultadoException("No se puede modificar un resultado anulado");
             }
 
             var partida=partidaClient.getPartidaById(resultado.getPartidaId());
@@ -152,6 +148,11 @@ public class ResultadoServiceImpl implements ResultadoService {
             resultado.setGanadorId(dto.getGanadorId());
             resultado.setPuntajeA(dto.getPuntajeA());
             resultado.setPuntajeB(dto.getPuntajeB());
+            if (resultado.getEstadoValidacion() == Resultado.EstadoValidacion.ANULADO) {
+                resultado.setEstadoValidacion(Resultado.EstadoValidacion.PENDIENTE);
+                resultado.setJustificacionAnulacion(null);
+                resultado.setFechaRegistro(com.esports.common.ArenaTime.now());
+            }
             return this.resultadoRepository.save(resultado);
         }).orElseThrow(() -> new ResultadoException("Resultado con id '" + id + "' no encontrado",404));
     }
@@ -162,7 +163,7 @@ public class ResultadoServiceImpl implements ResultadoService {
     public Resultado validar(Long id) {
         log.info("Validando resultado con id {}", id);
 
-        return this.resultadoRepository.findById(id).map(resultado -> {
+        return this.resultadoRepository.lock(id).map(resultado -> {
             if (resultado.getEstadoValidacion()
                     != Resultado.EstadoValidacion.PENDIENTE) {
                 throw new ResultadoException(
@@ -194,7 +195,7 @@ public class ResultadoServiceImpl implements ResultadoService {
     @Override
     public Resultado anular(Long id, AnulacionDTO dto) {
         log.info("Anulando resultado con id {}", id);
-        return this.resultadoRepository.findById(id).map(resultado -> {
+        return this.resultadoRepository.lock(id).map(resultado -> {
 
             if (resultado.getEstadoValidacion() == Resultado.EstadoValidacion.ANULADO) {
                 throw new ResultadoException("El resultado ya esta anulado");
