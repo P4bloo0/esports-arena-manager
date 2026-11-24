@@ -113,6 +113,8 @@ El comando prepara Admin, Leo, Camila, Felipe, Martina y Andrea. También crea l
 
 El comando indica dónde guarda las claves de estos perfiles. En Windows quedan en `%LOCALAPPDATA%\eSportsArena\perfiles-demo.json`.
 
+La demostración incluye tres torneos con inscripciones abiertas y un premio al primer lugar: Copa del Overworld (Minecraft), Copa del Nexo (League of Legends) y Choque de Estrellas (Brawl Stars). Puedes ejecutar el comando de nuevo para completar la preparación sin volver a crear los torneos existentes.
+
 ## Flujo principal
 
 Antes de cualquier prueba, registrarse o loguearse en auth-service y usar el token en el header Authorization de cada petición.

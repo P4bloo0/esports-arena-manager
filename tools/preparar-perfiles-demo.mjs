@@ -34,9 +34,9 @@ async function leerClaves() {
   }
 }
 
-async function solicitar(ruta, { origen = gateway, token, datos, cabeceras = {} } = {}) {
+async function solicitar(ruta, { origen = gateway, token, datos, metodo = datos ? "POST" : "GET", cabeceras = {} } = {}) {
   const respuesta = await fetch(origen + ruta, {
-    method: datos ? "POST" : "GET",
+    method: metodo,
     headers: {
       ...(token && { Authorization: `Bearer ${token}` }),
       ...(datos && { "Content-Type": "application/json" }),
@@ -120,6 +120,47 @@ async function prepararEquipo(nombre, juego, capitan, integrante) {
   }
 }
 
+function fechaDemo(dias) {
+  const fecha = new Date(Date.now() + dias * 86_400_000);
+  return fecha.toLocaleDateString("sv-SE", { timeZone: "America/Santiago" }) + "T20:00:00";
+}
+
+async function prepararTorneo(nombre, juego, diasHastaCierre, token) {
+  if (!juego.estado) {
+    console.log(`Se omitió ${nombre} porque ${juego.nombre} está desactivado.`);
+    return;
+  }
+
+  const torneos = await solicitar("/torneos");
+  let torneo = torneos.find((actual) => actual.nombre === nombre);
+  if (torneo && torneo.juegoId !== juego.juegoId) {
+    throw new Error(`Ya existe un torneo de otro juego con el nombre ${nombre}.`);
+  }
+  if (torneo && torneo.estado !== "BORRADOR") return;
+
+  if (!torneo) {
+    torneo = await solicitar("/torneos", {
+      token,
+      datos: {
+        nombre,
+        juegoId: juego.juegoId,
+        modalidad: juego.modalidad,
+        cupoMaximo: 8,
+        fechaCierreInscripcion: fechaDemo(diasHastaCierre),
+        fechaInicio: fechaDemo(diasHastaCierre + 1),
+        fechaFin: fechaDemo(diasHastaCierre + 3),
+      },
+    });
+  }
+
+  const ruta = `/torneos/${torneo.torneoId}`;
+  const premios = await solicitar(`${ruta}/premios/configuracion`, { token });
+  if (!premios.some((premio) => premio.posicion === 1)) {
+    await solicitar(`${ruta}/premios`, { token, datos: { posicion: 1, descripcion: "Trofeo de la Arena" } });
+  }
+  await solicitar(`${ruta}/estado?nuevo=ABIERTO`, { metodo: "PUT", token });
+}
+
 try {
   const cuentas = await prepararCuentas(await leerClaves());
   const { token } = cuentas.get("admin");
@@ -129,9 +170,15 @@ try {
   const lol = await prepararJuego({
     nombre: "League of Legends", genero: "MOBA", modalidad: "5v5", jugadoresPorEquipo: 5,
   }, token);
+  const brawlStars = await prepararJuego({
+    nombre: "Brawl Stars", genero: "Acción", modalidad: "3v3", jugadoresPorEquipo: 3,
+  }, token);
   await prepararEquipo("Creepers Arena", minecraft, cuentas.get("felipe"), cuentas.get("leo"));
   await prepararEquipo("Nexo Arena", lol, cuentas.get("martina"), cuentas.get("camila"));
-  console.log("Perfiles y equipos de demostración preparados.");
+  await prepararTorneo("Copa del Overworld", minecraft, 14, token);
+  await prepararTorneo("Copa del Nexo", lol, 17, token);
+  await prepararTorneo("Choque de Estrellas", brawlStars, 21, token);
+  console.log("Perfiles, equipos y torneos de demostración preparados.");
   console.log(`Claves locales en ${archivoClaves}`);
 } catch (error) {
   console.error(error.message);
