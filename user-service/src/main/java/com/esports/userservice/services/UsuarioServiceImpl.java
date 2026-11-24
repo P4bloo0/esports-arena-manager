@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService{
@@ -51,7 +52,8 @@ public class UsuarioServiceImpl implements UsuarioService{
 
         // email unico
         if(this.usuarioRepository.findByEmail(dto.getEmail()).isPresent()){
-            throw new UsuarioException("el email '" + dto.getEmail() + "' ya esta registrado");
+            throw new UsuarioException("Revisa los datos del formulario.", 409,
+                    Map.of("email", "Este correo ya está registrado. Inicia sesión o usa otro correo."));
         }
 
         Usuario usuario = new Usuario();

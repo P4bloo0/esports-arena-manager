@@ -160,8 +160,12 @@ public class UsuarioServiceImplTest {
 
         // When & Then
         assertThatThrownBy(() -> usuarioService.save(usuarioDTO))
-                .isInstanceOf(UsuarioException.class)
-                .hasMessageContaining("juan@correo.com");
+                .isInstanceOfSatisfying(UsuarioException.class, ex -> {
+                    assertThat(ex.status()).isEqualTo(409);
+                    assertThat(ex.getMessage()).doesNotContain("juan@correo.com");
+                    assertThat(ex.errores()).containsEntry("email",
+                            "Este correo ya está registrado. Inicia sesión o usa otro correo.");
+                });
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }

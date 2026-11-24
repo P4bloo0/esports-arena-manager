@@ -16,9 +16,9 @@ public class ArenaErrors {
   return ResponseEntity.badRequest().body(new ErrorBody("Revisa los datos del formulario.",errors));
  }
  @ExceptionHandler(Exception.class) ResponseEntity<ErrorBody> failure(Exception ex) {
+  if(ex instanceof ArenaException a) return ResponseEntity.status(a.status()).body(new ErrorBody(a.getMessage(),a.errores()));
   int code=500; String message="No se pudo completar la operacion.";
-  if(ex instanceof ArenaException a) { code=a.status(); message=a.getMessage(); }
-  else if(ex instanceof AccessDeniedException) { code=403; message="No tienes permiso para esta accion."; }
+  if(ex instanceof AccessDeniedException) { code=403; message="No tienes permiso para esta accion."; }
   else if(ex instanceof DataIntegrityViolationException) { code=409; message="Los datos ya existen o estan relacionados con otros registros."; }
   else if(ex instanceof ResponseStatusException r) { code=r.getStatusCode().value(); message=r.getReason(); }
   else if(ex instanceof feign.FeignException f) { code=f.status()>0?f.status():503; message="Otro servicio no pudo completar la operacion."; }

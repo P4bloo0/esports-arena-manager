@@ -5,8 +5,13 @@ import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.server.resource.authentication.*;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.web.context.request.*;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 @Configuration
 @Import(ArenaErrors.class)
 public class ArenaConfiguration {
@@ -32,10 +37,22 @@ public class ArenaConfiguration {
   };
  }
  @Bean feign.codec.ErrorDecoder remoteErrors() {
+  var mapper = JsonMapper.builder().build();
   return (method,response) -> {
    String message="El servicio remoto no pudo completar la operacion.";
-   try { if(response.body()!=null) { var json=tools.jackson.databind.json.JsonMapper.builder().build().readTree(response.body().asInputStream()); if(json.has("mensaje")) message=json.get("mensaje").asText(); } } catch(Exception ignored) {}
-   return new ArenaException(response.status(),message);
+   Map<String,String> errors = new LinkedHashMap<>();
+   if (response.body() != null) {
+    try (var body = response.body().asInputStream()) {
+     var json = mapper.readTree(body);
+     if (json.path("mensaje").isTextual()) message = json.path("mensaje").asText();
+     for (var campo : json.path("errores").properties()) {
+      if (campo.getValue().isTextual()) errors.put(campo.getKey(), campo.getValue().asText());
+     }
+    } catch (IOException | JacksonException ignored) {
+     // Algunos errores de infraestructura no tienen un cuerpo JSON.
+    }
+   }
+   return new ArenaException(response.status(),message,errors);
   };
  }
 }
