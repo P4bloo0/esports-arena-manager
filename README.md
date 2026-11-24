@@ -101,6 +101,18 @@ docker compose up --build
 
 Levanta un MySQL propio en contenedor (puerto 3307 en el host, para no chocar con Laragon) junto con los 13 microservicios. Eureka queda en localhost:8761 y el Gateway en localhost:8080.
 
+## Perfiles de demostración
+
+Con el backend local en Docker y Node.js instalado, ejecuta desde la raíz:
+
+```powershell
+node tools/preparar-perfiles-demo.mjs
+```
+
+El comando prepara Admin, Leo, Camila, Felipe, Martina y Andrea. También crea los equipos de Minecraft y League of Legends que necesitan esos perfiles. Felipe capitanea el de Minecraft. En una base que ya tenga otro administrador, puedes autorizar el alta de estas cuentas con su JWT en la variable de proceso `ARENA_DEMO_TOKEN_ADMIN`.
+
+El comando indica dónde guarda las claves de estos perfiles. En Windows quedan en `%LOCALAPPDATA%\eSportsArena\perfiles-demo.json`.
+
 ## Flujo principal
 
 Antes de cualquier prueba, registrarse o loguearse en auth-service y usar el token en el header Authorization de cada petición.
