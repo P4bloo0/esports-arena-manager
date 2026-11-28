@@ -101,6 +101,29 @@ docker compose up --build
 
 Levanta un MySQL propio en contenedor (puerto 3307 en el host, para no chocar con Laragon) junto con los 13 microservicios. Eureka queda en localhost:8761 y el Gateway en localhost:8080.
 
+## Despliegue en la nube
+
+El perfil `prod` usa PostgreSQL con un esquema `db_*` por servicio y hasta dos conexiones por contenedor. Spring Cloud descubre los servicios mediante URLs fijas. El Gateway sigue siendo la entrada para el frontend. `render.yaml` configura los 11 servicios de negocio y el Gateway como servicios Docker.
+
+1. En Supabase, crea un proyecto PostgreSQL. Abre **Connect → Session pooler** para obtener el host, el puerto y el usuario. Descarga el certificado CA en **Database → Settings → SSL Configuration**.
+2. En Render, crea el grupo de entorno `arena-ep3-cloud-db`. Agrega el certificado como **Secret File** con nombre `supabase-ca.crt` y configura las siguientes variables en ese grupo. Usa el usuario que aparece en **Session pooler**, que incluye la referencia del proyecto.
+
+   | Variable | Valor |
+   |---|---|
+   | `DB_URL` | `jdbc:postgresql://HOST_DEL_POOLER:5432/postgres?sslmode=verify-full&sslrootcert=/etc/secrets/supabase-ca.crt` |
+   | `DB_USERNAME` | Usuario del **Session pooler** |
+   | `DB_PASSWORD` | Contraseña de la base de Supabase |
+
+3. En Render, elige **New → Blueprint** y selecciona la rama que contiene `render.yaml`. Completa `CORS_ORIGINS` con la URL del frontend en Vercel, sin una barra final. Para probar también desde Vite agrega `http://localhost:5173`, separado por una coma sin espacios. Render genera las claves compartidas para JWT y llamadas internas.
+4. Abre la URL de **arena-ep3-gateway** y prueba `/api/v1/torneos`. Un arreglo vacío es una respuesta válida en una instalación nueva. Usa la URL base del Gateway como `VITE_API_URL` en Vercel y vuelve a desplegar el frontend.
+5. Crea el administrador inicial contra la URL HTTPS de **arena-ep3-auth**. El script pide la clave interna generada en el grupo `arena-ep3-cloud` y la contraseña del administrador.
+
+   ```powershell
+   .\tools\crear-admin.ps1 -Nickname admin -Nombre 'Administrador' -Email 'admin@example.com' -AuthUrl 'https://URL-DE-AUTH-EN-RENDER'
+   ```
+
+Render Free comparte sus horas disponibles entre todos los servicios del workspace y los suspende tras un periodo de inactividad. Esta configuración está pensada para una demo académica. La base de Supabase parte vacía y se llena con los datos que registres en el entorno en la nube.
+
 ## Perfiles de demostración
 
 Con el backend local en Docker y Node.js instalado, ejecuta desde la raíz:

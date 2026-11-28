@@ -1,0 +1,309 @@
+# Demo académica. Los servicios Free usan sus direcciones HTTPS de Render.
+services:
+  - type: web
+    name: arena-ep3-gateway
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: gateway-service
+      - key: CORS_ORIGINS
+        sync: false
+      - key: AUTH_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-auth
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: GAME_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-game
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: MATCH_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-match
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: NOTIFICATION_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-notification
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: RANKING_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-ranking
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: REGISTRATION_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-registration
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: RESULT_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-result
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: SANCTION_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-sanction
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: TEAM_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-team
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: TOURNAMENT_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-tournament
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: USER_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-user
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-auth
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: auth-service
+      - fromGroup: arena-ep3-cloud-db
+      - key: USER_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-user
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-game
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: game-service
+      - fromGroup: arena-ep3-cloud-db
+
+  - type: web
+    name: arena-ep3-match
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: match-service
+      - fromGroup: arena-ep3-cloud-db
+      - key: REGISTRATION_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-registration
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: TOURNAMENT_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-tournament
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-notification
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: notification-service
+      - fromGroup: arena-ep3-cloud-db
+      - key: TEAM_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-team
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-ranking
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: ranking-service
+      - fromGroup: arena-ep3-cloud-db
+      - key: MATCH_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-match
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: REGISTRATION_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-registration
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: RESULT_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-result
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-registration
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: registration-service
+      - fromGroup: arena-ep3-cloud-db
+      - key: GAME_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-game
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: SANCTION_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-sanction
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: TEAM_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-team
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: TOURNAMENT_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-tournament
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: USER_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-user
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-result
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: result-service
+      - fromGroup: arena-ep3-cloud-db
+      - key: MATCH_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-match
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: RANKING_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-ranking
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: TOURNAMENT_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-tournament
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-sanction
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: sanction-service
+      - fromGroup: arena-ep3-cloud-db
+
+  - type: web
+    name: arena-ep3-team
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: team-service
+      - fromGroup: arena-ep3-cloud-db
+      - key: GAME_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-game
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: USER_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-user
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-tournament
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: tournament-service
+      - fromGroup: arena-ep3-cloud-db
+      - key: GAME_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-game
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: MATCH_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-match
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: NOTIFICATION_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-notification
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: RANKING_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-ranking
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: REGISTRATION_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-registration
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: RESULT_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-result
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: TEAM_SERVICE_URL
+        fromService:
+          type: web
+          name: arena-ep3-team
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: arena-ep3-user
+    runtime: docker
+    plan: free
+    envVars:
+      - fromGroup: arena-ep3-cloud
+      - key: SERVICE_NAME
+        value: user-service
+      - fromGroup: arena-ep3-cloud-db
+
+envVarGroups:
+  - name: arena-ep3-cloud
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_TOOL_OPTIONS
+        value: '-XX:MaxRAMPercentage=55.0 -XX:+ExitOnOutOfMemoryError'
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ARENA_INTERNAL_SECRET
+        generateValue: true
